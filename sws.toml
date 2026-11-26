@@ -6,20 +6,25 @@ page404 = "./404.html"
 # 外层 Nginx 网关已负责压缩，容器内关闭压缩
 compression = false
 
-# 关闭默认按扩展名的缓存头，改用下方精确规则
+# 关闭默认按扩展名的缓存头，改用下方精确规则（后匹配的同名 Header 会覆盖前序规则）
 cache-control-headers = false
 
-# Astro 与构建期生成的带 hash 静态资源：1 年强缓存
-[[advanced.headers]]
-source = "/{_astro,assets}/**/*"
-[advanced.headers.headers]
-Cache-Control = "public, max-age=31536000, immutable"
-
-# 其余静态图标资源：缓存 30 天
+# 通用静态图标资源：默认缓存 30 天
 [[advanced.headers]]
 source = "**/*.{webp,png,jpg,svg,ico}"
 [advanced.headers.headers]
 Cache-Control = "public, max-age=2592000"
+
+# Astro 与构建期生成的带 hash 静态资源：覆盖为 1 年强缓存
+[[advanced.headers]]
+source = "/_astro/**"
+[advanced.headers.headers]
+Cache-Control = "public, max-age=31536000, immutable"
+
+[[advanced.headers]]
+source = "/assets/**"
+[advanced.headers.headers]
+Cache-Control = "public, max-age=31536000, immutable"
 
 # 根路径与 HTML 页面不强缓存，确保发版后立即生效
 [[advanced.headers]]
