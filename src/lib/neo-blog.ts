@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
@@ -51,6 +52,10 @@ const BRAND_ICON_MAP: Record<string, { id: SocialLink['id']; label: string; icon
 	'brand:neteasemusic': { id: 'neteasemusic', label: '网易云音乐', icon: 'neteasemusic' },
 };
 
+function shortDigest(buf: Buffer): string {
+	return crypto.createHash('sha256').update(buf).digest('hex').slice(0, 8);
+}
+
 async function fetchBufferWithFallback(url: string, fallbackPath: string): Promise<Buffer> {
 	if (url) {
 		try {
@@ -65,21 +70,36 @@ async function fetchBufferWithFallback(url: string, fallbackPath: string): Promi
 	return fs.readFile(fallbackPath);
 }
 
-async function writeToTargets(filename: string, data: Buffer): Promise<void> {
+async function writeHashedAsset(
+	prefix: string,
+	filename: string,
+	data: Buffer,
+): Promise<void> {
 	const root = process.cwd();
-	const publicDir = path.resolve(root, 'public');
-	await fs.mkdir(publicDir, { recursive: true });
-	await fs.writeFile(path.join(publicDir, filename), data);
+	const dirs = [path.resolve(root, 'public/assets')];
 
 	const distDir = path.resolve(root, 'dist');
 	try {
 		const stat = await fs.stat(distDir);
 		if (stat.isDirectory()) {
-			await fs.writeFile(path.join(distDir, filename), data);
+			dirs.push(path.join(distDir, 'assets'));
 		}
 	} catch {
 		// dist/ does not exist during dev
 	}
+
+	await Promise.all(
+		dirs.map(async (dir) => {
+			await fs.mkdir(dir, { recursive: true });
+			const existing = await fs.readdir(dir);
+			await Promise.all(
+				existing
+					.filter((name) => name.startsWith(`${prefix}.`) && name !== filename)
+					.map((stale) => fs.unlink(path.join(dir, stale))),
+			);
+			await fs.writeFile(path.join(dir, filename), data);
+		}),
+	);
 }
 
 async function optimizeLocalImages(
@@ -98,32 +118,37 @@ async function optimizeLocalImages(
 		fetchBufferWithFallback(avatarUrl, path.resolve(root, 'src/assets/fallback-avatar.webp')),
 	]);
 
+	const bannerHash = shortDigest(bannerBuf);
+	const avatarHash = shortDigest(avatarBuf);
+	const bannerFile = `banner.${bannerHash}.webp`;
+	const avatarFile = `avatar.${avatarHash}.webp`;
+
 	const bannerOut = await sharp(bannerBuf)
-		.resize({ width: 800, withoutEnlargement: true })
-		.webp({ quality: 82 })
+		.resize({ width: 760, withoutEnlargement: true })
+		.webp({ quality: 70, effort: 6 })
 		.toBuffer({ resolveWithObject: true });
 
 	const bgThumbBuf = await sharp(bannerBuf)
 		.resize({ width: 64, withoutEnlargement: true })
-		.webp({ quality: 60 })
+		.webp({ quality: 55, effort: 6 })
 		.toBuffer();
 
 	const avatarOutBuf = await sharp(avatarBuf)
 		.resize({ width: 192, height: 192, fit: 'cover' })
-		.webp({ quality: 85 })
+		.webp({ quality: 78, effort: 6 })
 		.toBuffer();
 
 	await Promise.all([
-		writeToTargets('banner.webp', bannerOut.data),
-		writeToTargets('avatar.webp', avatarOutBuf),
+		writeHashedAsset('banner', bannerFile, bannerOut.data),
+		writeHashedAsset('avatar', avatarFile, avatarOutBuf),
 	]);
 
 	return {
-		banner: '/banner.webp',
+		banner: `/assets/${bannerFile}`,
 		bannerWidth: bannerOut.info.width,
 		bannerHeight: bannerOut.info.height,
 		bannerBgDataUri: `data:image/webp;base64,${bgThumbBuf.toString('base64')}`,
-		avatar: '/avatar.webp',
+		avatar: `/assets/${avatarFile}`,
 	};
 }
 

@@ -8,17 +8,17 @@ compression = false
 # 关闭默认按扩展名的缓存头，改用下方精确规则
 cache-control-headers = false
 
-# Astro 带 hash 静态资源：长期强缓存
+# Astro 与构建期生成的带 hash 静态资源：1 年强缓存
 [[advanced.headers]]
-source = "/_astro/**/*"
+source = "/{_astro,assets}/**/*"
 [advanced.headers.headers]
 Cache-Control = "public, max-age=31536000, immutable"
 
-# 本地图标与优化后的图片资源：缓存 1 天
+# 其余静态图标资源：缓存 30 天
 [[advanced.headers]]
 source = "**/*.{webp,png,jpg,svg,ico}"
 [advanced.headers.headers]
-Cache-Control = "public, max-age=86400"
+Cache-Control = "public, max-age=2592000"
 
 # HTML 页面不强缓存，确保发版后立即生效
 [[advanced.headers]]
