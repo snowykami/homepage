@@ -1,0 +1,287 @@
+---
+import type { ResolvedProfile } from '../lib/neo-blog';
+import Icons from './Icons.astro';
+
+interface Props {
+	profile: ResolvedProfile;
+}
+
+const { profile } = Astro.props;
+---
+
+<main
+	class="profile-card"
+	aria-label="个人简介"
+	data-aria-zh="个人简介"
+	data-aria-en="Personal profile"
+>
+	<div class="banner-box">
+		<img
+			src={profile.banner}
+			alt=""
+			width={profile.bannerWidth}
+			height={profile.bannerHeight}
+			class="banner-img"
+			loading="eager"
+			decoding="sync"
+			fetchpriority="high"
+		/>
+	</div>
+
+	<div class="avatar-wrap">
+		<img
+			src={profile.avatar}
+			alt={profile.name}
+			width="96"
+			height="96"
+			class="avatar"
+			loading="eager"
+			decoding="async"
+		/>
+	</div>
+
+	<div class="profile-body">
+		<h1 class="profile-name">{profile.name}</h1>
+		<span class="accent-bar" aria-hidden="true"></span>
+		<p
+			class="profile-role"
+			data-i18n
+			data-zh={profile.role.zh}
+			data-en={profile.role.en}
+		>
+			{profile.role.zh}
+		</p>
+	</div>
+
+	<div
+		class="social-row"
+		aria-label="社交链接"
+		data-aria-zh="社交链接"
+		data-aria-en="Social links"
+	>
+		{
+			profile.socialLinks.map((item) => (
+				<a
+					href={item.href}
+					target="_blank"
+					rel="noopener noreferrer"
+					aria-label={item.label.zh}
+					title={item.label.zh}
+					data-aria-zh={item.label.zh}
+					data-aria-en={item.label.en}
+					class="social-btn"
+				>
+					<Icons name={item.icon} class="social-icon" />
+				</a>
+			))
+		}
+	</div>
+
+	<div class="cta-row">
+		{
+			profile.ctaLinks.map((item) => (
+				<a
+					href={item.href}
+					target={item.external ? '_blank' : undefined}
+					rel={item.external ? 'noopener noreferrer' : undefined}
+					class={`cta-btn ${item.id === 'blog' ? 'cta-primary' : 'cta-secondary'}`}
+				>
+					<Icons name={item.icon} class="cta-icon" />
+					<span data-i18n data-zh={item.label.zh} data-en={item.label.en}>
+						{item.label.zh}
+					</span>
+				</a>
+			))
+		}
+	</div>
+</main>
+
+<style>
+	.profile-card {
+		width: 100%;
+		max-width: 26rem;
+		padding: 1.15rem 1.15rem 1.5rem;
+		border-radius: 1.5rem;
+		background: var(--card-bg);
+		border: 1px solid var(--card-border);
+		backdrop-filter: blur(18px);
+		-webkit-backdrop-filter: blur(18px);
+		box-shadow: var(--card-shadow);
+		text-align: center;
+		transition:
+			transform 300ms ease,
+			box-shadow 300ms ease,
+			background-color 300ms ease;
+	}
+
+	.banner-box {
+		width: 100%;
+		aspect-ratio: 16 / 9.2;
+		border-radius: 1rem;
+		overflow: hidden;
+		background: #cbd5e1;
+	}
+
+	.banner-img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		display: block;
+		transition: transform 500ms ease;
+	}
+
+	.profile-card:hover .banner-img {
+		transform: scale(1.03);
+	}
+
+	.avatar-wrap {
+		position: relative;
+		z-index: 2;
+		width: 6.25rem;
+		height: 6.25rem;
+		margin: -3.125rem auto 0;
+		border-radius: 9999px;
+		padding: 4px;
+		background: var(--card-ring);
+		box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.16);
+		transition: background-color 300ms ease;
+	}
+
+	.avatar {
+		width: 100%;
+		height: 100%;
+		border-radius: 9999px;
+		object-fit: cover;
+		display: block;
+		user-select: none;
+		transition: transform 500ms ease;
+	}
+
+	.avatar-wrap:hover .avatar {
+		transform: scale(1.05);
+	}
+
+	.profile-body {
+		margin-top: 0.9rem;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.55rem;
+	}
+
+	.profile-name {
+		font-size: 1.6rem;
+		line-height: 1.25;
+		font-weight: 700;
+		letter-spacing: -0.01em;
+		color: var(--text-primary);
+	}
+
+	.accent-bar {
+		display: block;
+		width: 1.75rem;
+		height: 0.25rem;
+		border-radius: 9999px;
+		background: var(--blue-accent);
+	}
+
+	.profile-role {
+		margin-top: 0.1rem;
+		font-size: 0.96rem;
+		font-weight: 400;
+		color: var(--text-secondary);
+	}
+
+	.social-row {
+		margin-top: 1.25rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.7rem;
+	}
+
+	.social-btn {
+		width: 3rem;
+		height: 3rem;
+		border-radius: 0.9rem;
+		background: var(--squircle-bg);
+		color: var(--blue-accent);
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		text-decoration: none;
+		transition:
+			background-color 200ms ease,
+			transform 200ms ease,
+			color 200ms ease;
+	}
+
+	.social-btn:hover {
+		background: var(--squircle-bg-hover);
+		transform: translateY(-2px);
+	}
+
+	:global(.social-icon) {
+		width: 1.3rem;
+		height: 1.3rem;
+		display: block;
+	}
+
+	.cta-row {
+		margin-top: 1.15rem;
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.7rem;
+	}
+
+	.cta-btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.45rem;
+		padding: 0.68rem 1rem;
+		border-radius: 0.85rem;
+		font-size: 0.92rem;
+		font-weight: 600;
+		text-decoration: none;
+		white-space: nowrap;
+		transition:
+			background-color 200ms ease,
+			transform 200ms ease;
+	}
+
+	.cta-btn:hover {
+		transform: translateY(-1px);
+	}
+
+	.cta-primary {
+		background: var(--blue-accent);
+		color: #ffffff;
+	}
+
+	.cta-primary:hover {
+		background: var(--blue-accent-hover);
+	}
+
+	.cta-secondary {
+		background: var(--cta-secondary-bg);
+		color: var(--cta-secondary-text);
+	}
+
+	.cta-secondary:hover {
+		background: var(--cta-secondary-hover);
+	}
+
+	:global(.cta-icon) {
+		width: 1.05rem;
+		height: 1.05rem;
+		flex-shrink: 0;
+		display: block;
+	}
+
+	.social-btn:focus-visible,
+	.cta-btn:focus-visible {
+		outline: 2px solid var(--blue-accent);
+		outline-offset: 2px;
+	}
+</style>

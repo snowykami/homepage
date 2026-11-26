@@ -15,15 +15,15 @@ export interface CtaLink {
 
 export interface SocialLink {
 	id: 'x' | 'bilibili' | 'misskey' | 'github' | 'neteasemusic';
-	label: string;
+	label: LocalizedText;
 	href: string;
 	icon: 'x' | 'bilibili' | 'misskey' | 'github' | 'neteasemusic';
 }
 
 export interface SiteConfig {
 	name: string;
-	avatar: string;
-	banner: string;
+	siteUrl: string;
+	neoBlogApiUrl: string;
 	title: LocalizedText;
 	description: LocalizedText;
 	role: LocalizedText;
@@ -33,8 +33,10 @@ export interface SiteConfig {
 
 export const siteConfig: SiteConfig = {
 	name: 'Snowykami',
-	avatar: '/avatar.webp',
-	banner: '/banner.jpg',
+	siteUrl: 'https://sfkm.me',
+	neoBlogApiUrl:
+		import.meta.env.NEO_BLOG_API_URL ||
+		'https://blog.sfkm.me/api/v1/misc/public-config?keys=site_info',
 	title: {
 		zh: 'Snowykami - 个人主页',
 		en: 'Snowykami - Personal Website',
@@ -66,31 +68,31 @@ export const siteConfig: SiteConfig = {
 	socialLinks: [
 		{
 			id: 'x',
-			label: 'X (Twitter)',
+			label: { zh: 'X (Twitter)', en: 'X (Twitter)' },
 			href: 'https://x.com/christchisato',
 			icon: 'x',
 		},
 		{
 			id: 'bilibili',
-			label: '哔哩哔哩 (Bilibili)',
+			label: { zh: '哔哩哔哩', en: 'Bilibili' },
 			href: 'https://space.bilibili.com/233938750',
 			icon: 'bilibili',
 		},
 		{
 			id: 'misskey',
-			label: 'Misskey',
+			label: { zh: 'Misskey', en: 'Misskey' },
 			href: 'https://lab.liteyuki.org/@snowykami',
 			icon: 'misskey',
 		},
 		{
 			id: 'github',
-			label: 'GitHub',
+			label: { zh: 'GitHub', en: 'GitHub' },
 			href: 'https://github.com/snowykami',
 			icon: 'github',
 		},
 		{
 			id: 'neteasemusic',
-			label: '网易云音乐',
+			label: { zh: '网易云音乐', en: 'NetEase Cloud Music' },
 			href: 'https://music.163.com/#/user/home?id=1491388449',
 			icon: 'neteasemusic',
 		},

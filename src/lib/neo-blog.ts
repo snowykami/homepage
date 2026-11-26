@@ -5,9 +5,6 @@ import sharp from 'sharp';
 import type { IconName } from '../components/Icons.astro';
 import { siteConfig, type CtaLink, type LocalizedText, type SocialLink } from '../config/site';
 
-const NEO_BLOG_PUBLIC_CONFIG_URL =
-	'https://blog.sfkm.me/api/v1/misc/public-config?keys=site_info';
-
 interface NeoBlogLink {
 	icon?: string;
 	url?: string;
@@ -44,16 +41,34 @@ export interface ResolvedProfile {
 	source: 'neo-blog-api' | 'fallback';
 }
 
-const BRAND_ICON_MAP: Record<string, { id: SocialLink['id']; label: string; icon: IconName }> = {
-	'brand:x': { id: 'x', label: 'X (Twitter)', icon: 'x' },
-	'brand:bilibili': { id: 'bilibili', label: '哔哩哔哩 (Bilibili)', icon: 'bilibili' },
-	'brand:misskey': { id: 'misskey', label: 'Misskey', icon: 'misskey' },
-	'brand:github': { id: 'github', label: 'GitHub', icon: 'github' },
-	'brand:neteasemusic': { id: 'neteasemusic', label: '网易云音乐', icon: 'neteasemusic' },
+const BRAND_ICON_MAP: Record<
+	string,
+	{ id: SocialLink['id']; label: LocalizedText; icon: IconName }
+> = {
+	'brand:x': { id: 'x', label: { zh: 'X (Twitter)', en: 'X (Twitter)' }, icon: 'x' },
+	'brand:bilibili': { id: 'bilibili', label: { zh: '哔哩哔哩', en: 'Bilibili' }, icon: 'bilibili' },
+	'brand:misskey': { id: 'misskey', label: { zh: 'Misskey', en: 'Misskey' }, icon: 'misskey' },
+	'brand:github': { id: 'github', label: { zh: 'GitHub', en: 'GitHub' }, icon: 'github' },
+	'brand:neteasemusic': {
+		id: 'neteasemusic',
+		label: { zh: '网易云音乐', en: 'NetEase Cloud Music' },
+		icon: 'neteasemusic',
+	},
 };
+
+let cachedProfilePromise: Promise<ResolvedProfile> | null = null;
 
 function shortDigest(buf: Buffer): string {
 	return crypto.createHash('sha256').update(buf).digest('hex').slice(0, 8);
+}
+
+async function fileExists(filePath: string): Promise<boolean> {
+	try {
+		await fs.access(filePath);
+		return true;
+	} catch {
+		return false;
+	}
 }
 
 async function fetchBufferWithFallback(url: string, fallbackPath: string): Promise<Buffer> {
@@ -70,36 +85,48 @@ async function fetchBufferWithFallback(url: string, fallbackPath: string): Promi
 	return fs.readFile(fallbackPath);
 }
 
-async function writeHashedAsset(
+async function syncHashedAsset(
 	prefix: string,
 	filename: string,
-	data: Buffer,
-): Promise<void> {
+	encodeFn: () => Promise<Buffer>,
+): Promise<Buffer> {
 	const root = process.cwd();
-	const dirs = [path.resolve(root, 'public/assets')];
+	const publicAssetsDir = path.resolve(root, 'public/assets');
+	await fs.mkdir(publicAssetsDir, { recursive: true });
 
-	const distDir = path.resolve(root, 'dist');
-	try {
-		const stat = await fs.stat(distDir);
-		if (stat.isDirectory()) {
-			dirs.push(path.join(distDir, 'assets'));
-		}
-	} catch {
-		// dist/ does not exist during dev
+	const publicFilePath = path.join(publicAssetsDir, filename);
+	let data: Buffer;
+
+	if (await fileExists(publicFilePath)) {
+		data = await fs.readFile(publicFilePath);
+	} else {
+		data = await encodeFn();
+		const existing = await fs.readdir(publicAssetsDir);
+		await Promise.all(
+			existing
+				.filter((name) => name.startsWith(`${prefix}.`) && name !== filename)
+				.map((stale) => fs.unlink(path.join(publicAssetsDir, stale))),
+		);
+		await fs.writeFile(publicFilePath, data);
 	}
 
-	await Promise.all(
-		dirs.map(async (dir) => {
-			await fs.mkdir(dir, { recursive: true });
-			const existing = await fs.readdir(dir);
-			await Promise.all(
-				existing
-					.filter((name) => name.startsWith(`${prefix}.`) && name !== filename)
-					.map((stale) => fs.unlink(path.join(dir, stale))),
-			);
-			await fs.writeFile(path.join(dir, filename), data);
-		}),
-	);
+	const distDir = path.resolve(root, 'dist');
+	if (await fileExists(distDir)) {
+		const distAssetsDir = path.join(distDir, 'assets');
+		await fs.mkdir(distAssetsDir, { recursive: true });
+		const distExisting = await fs.readdir(distAssetsDir);
+		await Promise.all(
+			distExisting
+				.filter((name) => name.startsWith(`${prefix}.`) && name !== filename)
+				.map((stale) => fs.unlink(path.join(distAssetsDir, stale))),
+		);
+		const distFilePath = path.join(distAssetsDir, filename);
+		if (!(await fileExists(distFilePath))) {
+			await fs.writeFile(distFilePath, data);
+		}
+	}
+
+	return data;
 }
 
 async function optimizeLocalImages(
@@ -123,46 +150,50 @@ async function optimizeLocalImages(
 	const bannerFile = `banner.${bannerHash}.webp`;
 	const avatarFile = `avatar.${avatarHash}.webp`;
 
-	const bannerOut = await sharp(bannerBuf)
-		.resize({ width: 760, withoutEnlargement: true })
-		.webp({ quality: 70, effort: 6 })
-		.toBuffer({ resolveWithObject: true });
-
-	const bgThumbBuf = await sharp(bannerBuf)
-		.resize({ width: 64, withoutEnlargement: true })
-		.webp({ quality: 55, effort: 6 })
-		.toBuffer();
-
-	const avatarOutBuf = await sharp(avatarBuf)
-		.resize({ width: 192, height: 192, fit: 'cover' })
-		.webp({ quality: 78, effort: 6 })
-		.toBuffer();
-
-	await Promise.all([
-		writeHashedAsset('banner', bannerFile, bannerOut.data),
-		writeHashedAsset('avatar', avatarFile, avatarOutBuf),
+	const [bannerData, bgThumbBuf] = await Promise.all([
+		syncHashedAsset('banner', bannerFile, () =>
+			sharp(bannerBuf)
+				.resize({ width: 760, withoutEnlargement: true })
+				.webp({ quality: 70, effort: 6 })
+				.toBuffer(),
+		),
+		// Pre-blur & slightly boost saturation at build time so CSS needs zero runtime GPU blur filter
+		sharp(bannerBuf)
+			.resize({ width: 96, withoutEnlargement: true })
+			.modulate({ saturation: 1.12 })
+			.blur(6)
+			.webp({ quality: 58, effort: 6 })
+			.toBuffer(),
+		syncHashedAsset('avatar', avatarFile, () =>
+			sharp(avatarBuf)
+				.resize({ width: 192, height: 192, fit: 'cover' })
+				.webp({ quality: 78, effort: 6 })
+				.toBuffer(),
+		),
 	]);
+
+	const bannerMeta = await sharp(bannerData).metadata();
 
 	return {
 		banner: `/assets/${bannerFile}`,
-		bannerWidth: bannerOut.info.width,
-		bannerHeight: bannerOut.info.height,
+		bannerWidth: bannerMeta.width ?? 760,
+		bannerHeight: bannerMeta.height ?? 536,
 		bannerBgDataUri: `data:image/webp;base64,${bgThumbBuf.toString('base64')}`,
 		avatar: `/assets/${avatarFile}`,
 	};
 }
 
-export async function fetchNeoBlogProfile(): Promise<ResolvedProfile> {
+async function loadNeoBlogProfile(): Promise<ResolvedProfile> {
 	let name = siteConfig.name;
 	let remoteAvatar = '';
 	let remoteBanner = '';
 	let baseUrl = 'https://blog.sfkm.me';
 	let enDesc = siteConfig.role.en;
-	let mappedLinks: SocialLink[] = [];
+	const mappedLinks: SocialLink[] = [];
 	let source: ResolvedProfile['source'] = 'fallback';
 
 	try {
-		const res = await fetch(NEO_BLOG_PUBLIC_CONFIG_URL, {
+		const res = await fetch(siteConfig.neoBlogApiUrl, {
 			signal: AbortSignal.timeout(4000),
 			headers: { Accept: 'application/json' },
 		});
@@ -239,4 +270,11 @@ export async function fetchNeoBlogProfile(): Promise<ResolvedProfile> {
 		socialLinks,
 		source,
 	};
+}
+
+export function fetchNeoBlogProfile(): Promise<ResolvedProfile> {
+	if (!cachedProfilePromise) {
+		cachedProfilePromise = loadNeoBlogProfile();
+	}
+	return cachedProfilePromise;
 }

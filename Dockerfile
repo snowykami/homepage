@@ -2,12 +2,17 @@
 
 FROM node:24-alpine AS builder
 
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 
 WORKDIR /app
 
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+
+ARG NEO_BLOG_API_URL=""
+ENV NEO_BLOG_API_URL=${NEO_BLOG_API_URL}
 
 COPY . .
 RUN pnpm build

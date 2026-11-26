@@ -1,6 +1,7 @@
 [general]
 root = "/public"
 port = 80
+page404 = "./404.html"
 
 # 外层 Nginx 网关已负责压缩，容器内关闭压缩
 compression = false
@@ -20,7 +21,12 @@ source = "**/*.{webp,png,jpg,svg,ico}"
 [advanced.headers.headers]
 Cache-Control = "public, max-age=2592000"
 
-# HTML 页面不强缓存，确保发版后立即生效
+# 根路径与 HTML 页面不强缓存，确保发版后立即生效
+[[advanced.headers]]
+source = "/"
+[advanced.headers.headers]
+Cache-Control = "no-cache"
+
 [[advanced.headers]]
 source = "**/*.html"
 [advanced.headers.headers]
