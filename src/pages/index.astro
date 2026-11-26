@@ -1,0 +1,695 @@
+---
+import Icons from '../components/Icons.astro';
+import { fetchNeoBlogProfile } from '../lib/neo-blog';
+
+const profile = await fetchNeoBlogProfile();
+---
+
+<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />
+		<meta name="description" content={profile.description.zh} />
+		<meta name="generator" content={Astro.generator} />
+		<title data-zh={profile.title.zh} data-en={profile.title.en}>
+			{profile.title.zh}
+		</title>
+		<script is:inline>
+			(() => {
+				try {
+					const theme = localStorage.getItem('theme') || 'system';
+					const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+					if (theme === 'dark' || (theme === 'system' && prefersDark)) {
+						document.documentElement.classList.add('dark');
+					}
+					const savedLang = localStorage.getItem('lang');
+					const browserLang = (navigator.languages?.[0] || navigator.language || '').toLowerCase();
+					const lang =
+						savedLang === 'en' || savedLang === 'zh'
+							? savedLang
+							: browserLang.startsWith('zh')
+								? 'zh'
+								: 'en';
+					document.documentElement.lang = lang === 'en' ? 'en' : 'zh-CN';
+				} catch {}
+			})();
+		</script>
+	</head>
+	<body>
+		<!-- Blurred atmospheric background -->
+		<div class="bg-backdrop" aria-hidden="true">
+			<div class="bg-image" style={`background-image: url('${profile.banner}')`}></div>
+			<div class="bg-overlay"></div>
+		</div>
+
+		<!-- Top-right minimal controls -->
+		<header class="top-controls">
+			<div class="segmented theme-switcher" role="radiogroup" aria-label="主题选择" data-active="1">
+				<span class="segmented-thumb" aria-hidden="true"></span>
+				<button
+					type="button"
+					class="segmented-btn"
+					role="radio"
+					aria-checked="false"
+					data-theme-value="light"
+					title="浅色 / Light"
+				>
+					<Icons name="sun" class="control-icon" />
+					<span class="control-label" data-i18n data-zh="浅色" data-en="Light">浅色</span>
+				</button>
+				<button
+					type="button"
+					class="segmented-btn"
+					role="radio"
+					aria-checked="true"
+					data-theme-value="system"
+					title="系统 / System"
+				>
+					<Icons name="monitor" class="control-icon" />
+					<span class="control-label" data-i18n data-zh="系统" data-en="System">系统</span>
+				</button>
+				<button
+					type="button"
+					class="segmented-btn"
+					role="radio"
+					aria-checked="false"
+					data-theme-value="dark"
+					title="深色 / Dark"
+				>
+					<Icons name="moon" class="control-icon" />
+					<span class="control-label" data-i18n data-zh="深色" data-en="Dark">深色</span>
+				</button>
+			</div>
+
+			<div class="segmented lang-switcher" role="radiogroup" aria-label="语言选择" data-active="0">
+				<span class="segmented-thumb" aria-hidden="true"></span>
+				<button
+					type="button"
+					class="segmented-btn"
+					role="radio"
+					aria-checked="true"
+					data-lang-value="zh"
+				>
+					<span>文</span>
+				</button>
+				<button
+					type="button"
+					class="segmented-btn"
+					role="radio"
+					aria-checked="false"
+					data-lang-value="en"
+				>
+					<span>En</span>
+				</button>
+			</div>
+		</header>
+
+		<!-- Main neo-blog style profile card -->
+		<div class="page-wrapper">
+			<main class="profile-card" aria-label="个人简介">
+				<div class="banner-box">
+					<img
+						src={profile.banner}
+						alt=""
+						class="banner-img"
+						loading="eager"
+						decoding="async"
+					/>
+				</div>
+
+				<div class="avatar-wrap">
+					<img
+						src={profile.avatar}
+						alt={profile.name}
+						width="96"
+						height="96"
+						class="avatar"
+						loading="eager"
+						decoding="async"
+					/>
+				</div>
+
+				<div class="profile-body">
+					<h1 class="profile-name">{profile.name}</h1>
+					<span class="accent-bar" aria-hidden="true"></span>
+					<p
+						class="profile-role"
+						data-i18n
+						data-zh={profile.role.zh}
+						data-en={profile.role.en}
+					>
+						{profile.role.zh}
+					</p>
+				</div>
+
+				<div class="social-row" aria-label="社交链接">
+					{
+						profile.socialLinks.map((item) => (
+							<a
+								href={item.href}
+								target="_blank"
+								rel="noopener noreferrer"
+								aria-label={item.label}
+								title={item.label}
+								class="social-btn"
+							>
+								<Icons name={item.icon} class="social-icon" />
+							</a>
+						))
+					}
+				</div>
+
+				<div class="cta-row">
+					{
+						profile.ctaLinks.map((item) => (
+							<a
+								href={item.href}
+								target={item.external ? '_blank' : undefined}
+								rel={item.external ? 'noopener noreferrer' : undefined}
+								class={`cta-btn ${item.id === 'blog' ? 'cta-primary' : 'cta-secondary'}`}
+							>
+								<Icons name={item.icon} class="cta-icon" />
+								<span data-i18n data-zh={item.label.zh} data-en={item.label.en}>
+									{item.label.zh}
+								</span>
+							</a>
+						))
+					}
+				</div>
+			</main>
+		</div>
+
+		<script>
+			type ThemeMode = 'light' | 'system' | 'dark';
+			type LangMode = 'zh' | 'en';
+
+			const THEME_INDEX: Record<ThemeMode, string> = {
+				light: '0',
+				system: '1',
+				dark: '2',
+			};
+
+			const LANG_INDEX: Record<LangMode, string> = {
+				zh: '0',
+				en: '1',
+			};
+
+			const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+			const themeGroup = document.querySelector<HTMLElement>('.theme-switcher');
+			const langGroup = document.querySelector<HTMLElement>('.lang-switcher');
+			const themeButtons = document.querySelectorAll<HTMLButtonElement>('[data-theme-value]');
+			const langButtons = document.querySelectorAll<HTMLButtonElement>('[data-lang-value]');
+			const i18nNodes = document.querySelectorAll<HTMLElement>('[data-i18n]');
+			const titleEl = document.querySelector<HTMLTitleElement>('title[data-zh][data-en]');
+
+			function getSavedTheme(): ThemeMode {
+				const raw = localStorage.getItem('theme');
+				return raw === 'light' || raw === 'dark' || raw === 'system' ? raw : 'system';
+			}
+
+			function detectBrowserLang(): LangMode {
+				const primary = (navigator.languages?.[0] || navigator.language || '').toLowerCase();
+				return primary.startsWith('zh') ? 'zh' : 'en';
+			}
+
+			function getSavedLang(): LangMode {
+				const raw = localStorage.getItem('lang');
+				return raw === 'en' || raw === 'zh' ? raw : detectBrowserLang();
+			}
+
+			function applyTheme(mode: ThemeMode): void {
+				const isDark = mode === 'dark' || (mode === 'system' && mediaQuery.matches);
+				document.documentElement.classList.toggle('dark', isDark);
+				if (themeGroup) {
+					themeGroup.dataset.active = THEME_INDEX[mode];
+				}
+				themeButtons.forEach((btn) => {
+					const active = btn.dataset.themeValue === mode;
+					btn.setAttribute('aria-checked', String(active));
+					btn.classList.toggle('is-active', active);
+				});
+			}
+
+			function applyLang(lang: LangMode): void {
+				document.documentElement.lang = lang === 'en' ? 'en' : 'zh-CN';
+				if (titleEl) {
+					const nextTitle = titleEl.dataset[lang];
+					if (nextTitle) document.title = nextTitle;
+				}
+				i18nNodes.forEach((node) => {
+					const text = node.dataset[lang];
+					if (text) node.textContent = text;
+				});
+				if (langGroup) {
+					langGroup.dataset.active = LANG_INDEX[lang];
+				}
+				langButtons.forEach((btn) => {
+					const active = btn.dataset.langValue === lang;
+					btn.setAttribute('aria-checked', String(active));
+					btn.classList.toggle('is-active', active);
+				});
+			}
+
+			let currentTheme = getSavedTheme();
+			let currentLang = getSavedLang();
+			applyTheme(currentTheme);
+			applyLang(currentLang);
+
+			themeButtons.forEach((btn) => {
+				btn.addEventListener('click', () => {
+					const next = btn.dataset.themeValue as ThemeMode | undefined;
+					if (!next) return;
+					currentTheme = next;
+					localStorage.setItem('theme', next);
+					applyTheme(next);
+				});
+			});
+
+			langButtons.forEach((btn) => {
+				btn.addEventListener('click', () => {
+					const next = btn.dataset.langValue as LangMode | undefined;
+					if (!next) return;
+					currentLang = next;
+					localStorage.setItem('lang', next);
+					applyLang(next);
+				});
+			});
+
+			mediaQuery.addEventListener('change', () => {
+				if (currentTheme === 'system') {
+					applyTheme('system');
+				}
+			});
+		</script>
+	</body>
+</html>
+
+<style>
+	:root {
+		--bg-overlay: rgba(241, 245, 249, 0.56);
+		--card-bg: rgba(255, 255, 255, 0.9);
+		--card-border: rgba(255, 255, 255, 0.85);
+		--card-ring: #ffffff;
+		--card-shadow:
+			0 20px 40px -15px rgba(15, 23, 42, 0.14),
+			0 4px 12px -2px rgba(15, 23, 42, 0.06);
+		--text-primary: #1e293b;
+		--text-secondary: #64748b;
+		--blue-accent: #1d6fe8;
+		--blue-accent-hover: #1558c0;
+		--squircle-bg: #eff6ff;
+		--squircle-bg-hover: #dbeafe;
+		--cta-secondary-bg: #f1f5f9;
+		--cta-secondary-hover: #e2e8f0;
+		--cta-secondary-text: #334155;
+		--track-bg: rgba(255, 255, 255, 0.68);
+		--track-border: rgba(255, 255, 255, 0.75);
+		--thumb-bg: rgba(255, 255, 255, 0.95);
+		--control-text: #64748b;
+		--control-text-active: #0f172a;
+	}
+
+	:global(html.dark) {
+		--bg-overlay: rgba(10, 15, 28, 0.72);
+		--card-bg: rgba(15, 23, 42, 0.84);
+		--card-border: rgba(148, 163, 184, 0.18);
+		--card-ring: #162033;
+		--card-shadow:
+			0 24px 48px -12px rgba(0, 0, 0, 0.55),
+			0 4px 16px -2px rgba(0, 0, 0, 0.35);
+		--text-primary: #f1f5f9;
+		--text-secondary: #94a3b8;
+		--blue-accent: #60a5fa;
+		--blue-accent-hover: #3b82f6;
+		--squircle-bg: rgba(30, 58, 138, 0.35);
+		--squircle-bg-hover: rgba(30, 58, 138, 0.6);
+		--cta-secondary-bg: rgba(51, 65, 85, 0.55);
+		--cta-secondary-hover: rgba(51, 65, 85, 0.85);
+		--cta-secondary-text: #e2e8f0;
+		--track-bg: rgba(15, 23, 42, 0.65);
+		--track-border: rgba(148, 163, 184, 0.2);
+		--thumb-bg: rgba(51, 65, 85, 0.9);
+		--control-text: #94a3b8;
+		--control-text-active: #f8fafc;
+	}
+
+	* {
+		box-sizing: border-box;
+		margin: 0;
+		padding: 0;
+	}
+
+	html,
+	body {
+		height: 100%;
+		font-family:
+			-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC',
+			'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+
+	body {
+		min-width: 340px;
+		color: var(--text-primary);
+		overflow-x: hidden;
+	}
+
+	/* Blurred atmospheric background */
+	.bg-backdrop {
+		position: fixed;
+		inset: 0;
+		z-index: -1;
+		overflow: hidden;
+	}
+
+	.bg-image {
+		position: absolute;
+		inset: -32px;
+		background-size: cover;
+		background-position: center;
+		filter: blur(22px) saturate(1.1);
+		transform: scale(1.06);
+	}
+
+	.bg-overlay {
+		position: absolute;
+		inset: 0;
+		background: var(--bg-overlay);
+		transition: background-color 300ms ease;
+	}
+
+	/* Top-right controls */
+	.top-controls {
+		position: fixed;
+		top: 1.25rem;
+		right: 1.25rem;
+		z-index: 20;
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+	}
+
+	.segmented {
+		position: relative;
+		display: grid;
+		padding: 0.2rem;
+		border-radius: 9999px;
+		background: var(--track-bg);
+		border: 1px solid var(--track-border);
+		backdrop-filter: blur(12px);
+		-webkit-backdrop-filter: blur(12px);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+	}
+
+	.theme-switcher {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+
+	.lang-switcher {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.segmented-thumb {
+		position: absolute;
+		top: 0.2rem;
+		bottom: 0.2rem;
+		left: 0.2rem;
+		border-radius: 9999px;
+		background: var(--thumb-bg);
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+		transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+	}
+
+	.theme-switcher .segmented-thumb {
+		width: calc((100% - 0.4rem) / 3);
+	}
+
+	.lang-switcher .segmented-thumb {
+		width: calc((100% - 0.4rem) / 2);
+	}
+
+	.segmented[data-active='0'] .segmented-thumb {
+		transform: translateX(0%);
+	}
+
+	.segmented[data-active='1'] .segmented-thumb {
+		transform: translateX(100%);
+	}
+
+	.segmented[data-active='2'] .segmented-thumb {
+		transform: translateX(200%);
+	}
+
+	.segmented-btn {
+		position: relative;
+		z-index: 1;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.3rem;
+		padding: 0.35rem 0.65rem;
+		border: 0;
+		border-radius: 9999px;
+		background: transparent;
+		color: var(--control-text);
+		font-size: 0.78rem;
+		font-weight: 500;
+		cursor: pointer;
+		white-space: nowrap;
+		transition: color 200ms ease;
+	}
+
+	.segmented-btn.is-active {
+		color: var(--control-text-active);
+	}
+
+	:global(.control-icon) {
+		width: 0.9rem;
+		height: 0.9rem;
+		flex-shrink: 0;
+		display: block;
+	}
+
+	.control-label {
+		display: none;
+	}
+
+	/* Main centered neo-blog profile card */
+	.page-wrapper {
+		min-height: 100vh;
+		width: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 4.5rem 1.25rem 2rem;
+	}
+
+	.profile-card {
+		width: 100%;
+		max-width: 26rem;
+		padding: 1.15rem 1.15rem 1.5rem;
+		border-radius: 1.5rem;
+		background: var(--card-bg);
+		border: 1px solid var(--card-border);
+		backdrop-filter: blur(18px);
+		-webkit-backdrop-filter: blur(18px);
+		box-shadow: var(--card-shadow);
+		text-align: center;
+		transition:
+			transform 300ms ease,
+			box-shadow 300ms ease,
+			background-color 300ms ease;
+	}
+
+	.banner-box {
+		width: 100%;
+		aspect-ratio: 16 / 9.2;
+		border-radius: 1rem;
+		overflow: hidden;
+		background: #cbd5e1;
+	}
+
+	.banner-img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		display: block;
+		transition: transform 500ms ease;
+	}
+
+	.profile-card:hover .banner-img {
+		transform: scale(1.03);
+	}
+
+	.avatar-wrap {
+		position: relative;
+		z-index: 2;
+		width: 6.25rem;
+		height: 6.25rem;
+		margin: -3.125rem auto 0;
+		border-radius: 9999px;
+		padding: 4px;
+		background: var(--card-ring);
+		box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.16);
+		transition: background-color 300ms ease;
+	}
+
+	.avatar {
+		width: 100%;
+		height: 100%;
+		border-radius: 9999px;
+		object-fit: cover;
+		display: block;
+		user-select: none;
+		transition: transform 500ms ease;
+	}
+
+	.avatar-wrap:hover .avatar {
+		transform: scale(1.05);
+	}
+
+	.profile-body {
+		margin-top: 0.9rem;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.55rem;
+	}
+
+	.profile-name {
+		font-size: 1.6rem;
+		line-height: 1.25;
+		font-weight: 700;
+		letter-spacing: -0.01em;
+		color: var(--text-primary);
+	}
+
+	.accent-bar {
+		display: block;
+		width: 1.75rem;
+		height: 0.25rem;
+		border-radius: 9999px;
+		background: var(--blue-accent);
+	}
+
+	.profile-role {
+		margin-top: 0.1rem;
+		font-size: 0.96rem;
+		font-weight: 400;
+		color: var(--text-secondary);
+	}
+
+	/* 5 Squircle social buttons */
+	.social-row {
+		margin-top: 1.25rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.7rem;
+	}
+
+	.social-btn {
+		width: 3rem;
+		height: 3rem;
+		border-radius: 0.9rem;
+		background: var(--squircle-bg);
+		color: var(--blue-accent);
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		text-decoration: none;
+		transition:
+			background-color 200ms ease,
+			transform 200ms ease,
+			color 200ms ease;
+	}
+
+	.social-btn:hover {
+		background: var(--squircle-bg-hover);
+		transform: translateY(-2px);
+	}
+
+	:global(.social-icon) {
+		width: 1.3rem;
+		height: 1.3rem;
+		display: block;
+	}
+
+	/* Primary navigation CTAs */
+	.cta-row {
+		margin-top: 1.15rem;
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.7rem;
+	}
+
+	.cta-btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.45rem;
+		padding: 0.68rem 1rem;
+		border-radius: 0.85rem;
+		font-size: 0.92rem;
+		font-weight: 600;
+		text-decoration: none;
+		white-space: nowrap;
+		transition:
+			background-color 200ms ease,
+			transform 200ms ease;
+	}
+
+	.cta-btn:hover {
+		transform: translateY(-1px);
+	}
+
+	.cta-primary {
+		background: var(--blue-accent);
+		color: #ffffff;
+	}
+
+	.cta-primary:hover {
+		background: var(--blue-accent-hover);
+	}
+
+	.cta-secondary {
+		background: var(--cta-secondary-bg);
+		color: var(--cta-secondary-text);
+	}
+
+	.cta-secondary:hover {
+		background: var(--cta-secondary-hover);
+	}
+
+	:global(.cta-icon) {
+		width: 1.05rem;
+		height: 1.05rem;
+		flex-shrink: 0;
+		display: block;
+	}
+
+	.social-btn:focus-visible,
+	.cta-btn:focus-visible,
+	.segmented-btn:focus-visible {
+		outline: 2px solid var(--blue-accent);
+		outline-offset: 2px;
+	}
+
+	@media (min-width: 640px) {
+		.control-label {
+			display: inline;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		*,
+		*::before,
+		*::after {
+			transition-duration: 0.01ms !important;
+			animation-duration: 0.01ms !important;
+		}
+	}
+</style>

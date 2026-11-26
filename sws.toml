@@ -1,0 +1,21 @@
+[general]
+root = "/public"
+port = 80
+
+# 外层 Nginx 网关已负责压缩，容器内关闭压缩
+compression = false
+
+# 关闭默认按扩展名的缓存头，改用下方精确规则
+cache-control-headers = false
+
+# Astro 带 hash 静态资源：长期强缓存
+[[advanced.headers]]
+source = "/_astro/**/*"
+[advanced.headers.headers]
+Cache-Control = "public, max-age=31536000, immutable"
+
+# HTML 页面不强缓存，确保发版后立即生效
+[[advanced.headers]]
+source = "**/*.html"
+[advanced.headers.headers]
+Cache-Control = "no-cache"
