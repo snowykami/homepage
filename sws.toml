@@ -14,6 +14,12 @@ source = "/_astro/**/*"
 [advanced.headers.headers]
 Cache-Control = "public, max-age=31536000, immutable"
 
+# 本地图标与优化后的图片资源：缓存 1 天
+[[advanced.headers]]
+source = "**/*.{webp,png,jpg,svg,ico}"
+[advanced.headers.headers]
+Cache-Control = "public, max-age=86400"
+
 # HTML 页面不强缓存，确保发版后立即生效
 [[advanced.headers]]
 source = "**/*.html"

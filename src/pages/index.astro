@@ -40,7 +40,7 @@ const profile = await fetchNeoBlogProfile();
 	<body>
 		<!-- Blurred atmospheric background -->
 		<div class="bg-backdrop" aria-hidden="true">
-			<div class="bg-image" style={`background-image: url('${profile.banner}')`}></div>
+			<div class="bg-image" style={`background-image: url('${profile.bannerBgDataUri}')`}></div>
 			<div class="bg-overlay"></div>
 		</div>
 
@@ -113,9 +113,12 @@ const profile = await fetchNeoBlogProfile();
 					<img
 						src={profile.banner}
 						alt=""
+						width={profile.bannerWidth}
+						height={profile.bannerHeight}
 						class="banner-img"
 						loading="eager"
-						decoding="async"
+						decoding="sync"
+						fetchpriority="high"
 					/>
 				</div>
 
