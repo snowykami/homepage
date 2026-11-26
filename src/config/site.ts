@@ -13,11 +13,10 @@ export interface CtaLink {
 	external?: boolean;
 }
 
-export interface SocialLink {
-	id: 'x' | 'bilibili' | 'misskey' | 'github' | 'neteasemusic';
-	label: LocalizedText;
-	href: string;
-	icon: 'x' | 'bilibili' | 'misskey' | 'github' | 'neteasemusic';
+export interface FallbackSocialLink {
+	name?: string;
+	icon: string;
+	url: string;
 }
 
 export interface SiteConfig {
@@ -28,7 +27,7 @@ export interface SiteConfig {
 	description: LocalizedText;
 	role: LocalizedText;
 	ctaLinks: CtaLink[];
-	socialLinks: SocialLink[];
+	socialLinks: FallbackSocialLink[];
 }
 
 export const siteConfig: SiteConfig = {
@@ -66,35 +65,10 @@ export const siteConfig: SiteConfig = {
 		},
 	],
 	socialLinks: [
-		{
-			id: 'x',
-			label: { zh: 'X (Twitter)', en: 'X (Twitter)' },
-			href: 'https://x.com/christchisato',
-			icon: 'x',
-		},
-		{
-			id: 'bilibili',
-			label: { zh: '哔哩哔哩', en: 'Bilibili' },
-			href: 'https://space.bilibili.com/233938750',
-			icon: 'bilibili',
-		},
-		{
-			id: 'misskey',
-			label: { zh: 'Misskey', en: 'Misskey' },
-			href: 'https://lab.liteyuki.org/@snowykami',
-			icon: 'misskey',
-		},
-		{
-			id: 'github',
-			label: { zh: 'GitHub', en: 'GitHub' },
-			href: 'https://github.com/snowykami',
-			icon: 'github',
-		},
-		{
-			id: 'neteasemusic',
-			label: { zh: '网易云音乐', en: 'NetEase Cloud Music' },
-			href: 'https://music.163.com/#/user/home?id=1491388449',
-			icon: 'neteasemusic',
-		},
+		{ icon: 'brand:x', url: 'https://x.com/christchisato' },
+		{ icon: 'brand:bilibili', url: 'https://space.bilibili.com/233938750' },
+		{ icon: 'brand:misskey', url: 'https://lab.liteyuki.org/@snowykami' },
+		{ icon: 'brand:github', url: 'https://github.com/snowykami' },
+		{ icon: 'brand:neteasemusic', url: 'https://music.163.com/#/user/home?id=1491388449' },
 	],
 };

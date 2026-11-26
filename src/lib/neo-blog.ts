@@ -2,13 +2,12 @@ import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
-import type { IconName } from '../components/Icons.astro';
-import { siteConfig, type CtaLink, type LocalizedText, type SocialLink } from '../config/site';
-
-interface NeoBlogLink {
-	icon?: string;
-	url?: string;
-}
+import { siteConfig, type CtaLink, type LocalizedText } from '../config/site';
+import {
+	resolveSocialLinks,
+	type RawOwnerLink,
+	type ResolvedSocialLink,
+} from './social-icons';
 
 interface NeoBlogSiteInfoResponse {
 	status?: number;
@@ -20,7 +19,7 @@ interface NeoBlogSiteInfoResponse {
 				name?: string;
 				avatar?: string;
 				description?: string;
-				links?: NeoBlogLink[];
+				links?: RawOwnerLink[];
 			};
 		};
 	};
@@ -37,24 +36,9 @@ export interface ResolvedProfile {
 	description: LocalizedText;
 	role: LocalizedText;
 	ctaLinks: CtaLink[];
-	socialLinks: SocialLink[];
+	socialLinks: ResolvedSocialLink[];
 	source: 'neo-blog-api' | 'fallback';
 }
-
-const BRAND_ICON_MAP: Record<
-	string,
-	{ id: SocialLink['id']; label: LocalizedText; icon: IconName }
-> = {
-	'brand:x': { id: 'x', label: { zh: 'X (Twitter)', en: 'X (Twitter)' }, icon: 'x' },
-	'brand:bilibili': { id: 'bilibili', label: { zh: '哔哩哔哩', en: 'Bilibili' }, icon: 'bilibili' },
-	'brand:misskey': { id: 'misskey', label: { zh: 'Misskey', en: 'Misskey' }, icon: 'misskey' },
-	'brand:github': { id: 'github', label: { zh: 'GitHub', en: 'GitHub' }, icon: 'github' },
-	'brand:neteasemusic': {
-		id: 'neteasemusic',
-		label: { zh: '网易云音乐', en: 'NetEase Cloud Music' },
-		icon: 'neteasemusic',
-	},
-};
 
 let cachedProfilePromise: Promise<ResolvedProfile> | null = null;
 
@@ -189,7 +173,7 @@ async function loadNeoBlogProfile(): Promise<ResolvedProfile> {
 	let remoteBanner = '';
 	let baseUrl = 'https://blog.sfkm.me';
 	let enDesc = siteConfig.role.en;
-	const mappedLinks: SocialLink[] = [];
+	let rawLinks: RawOwnerLink[] | null = null;
 	let source: ResolvedProfile['source'] = 'fallback';
 
 	try {
@@ -207,17 +191,8 @@ async function loadNeoBlogProfile(): Promise<ResolvedProfile> {
 				remoteBanner = info.about_background?.trim() || '';
 				baseUrl = info.base_url?.trim() || baseUrl;
 				enDesc = owner.description?.trim() || enDesc;
-
-				for (const link of owner.links ?? []) {
-					if (!link.icon || !link.url) continue;
-					const mapped = BRAND_ICON_MAP[link.icon];
-					if (!mapped) continue;
-					mappedLinks.push({
-						id: mapped.id,
-						label: mapped.label,
-						href: link.url,
-						icon: mapped.id,
-					});
+				if (Array.isArray(owner.links)) {
+					rawLinks = owner.links;
 				}
 				source = 'neo-blog-api';
 			}
@@ -227,7 +202,12 @@ async function loadNeoBlogProfile(): Promise<ResolvedProfile> {
 	}
 
 	const optimized = await optimizeLocalImages(remoteBanner, remoteAvatar);
-	const socialLinks = mappedLinks.length > 0 ? mappedLinks : siteConfig.socialLinks;
+	const resolvedFromApi = rawLinks ? resolveSocialLinks(rawLinks, siteConfig.siteUrl) : [];
+	const socialLinks =
+		resolvedFromApi.length > 0
+			? resolvedFromApi
+			: resolveSocialLinks(siteConfig.socialLinks, siteConfig.siteUrl);
+
 	const githubUrl = socialLinks.find((l) => l.id === 'github')?.href;
 
 	const ctaLinks: CtaLink[] = [

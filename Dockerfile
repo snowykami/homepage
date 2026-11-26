@@ -15,6 +15,7 @@ ARG NEO_BLOG_API_URL=""
 ENV NEO_BLOG_API_URL=${NEO_BLOG_API_URL}
 
 COPY . .
+ARG CACHEBUST=1
 RUN pnpm build
 
 FROM joseluisq/static-web-server:2 AS runner

@@ -63,15 +63,15 @@ const { profile } = Astro.props;
 			profile.socialLinks.map((item) => (
 				<a
 					href={item.href}
-					target="_blank"
-					rel="noopener noreferrer"
+					target={item.external ? '_blank' : undefined}
+					rel={item.external ? 'noopener noreferrer' : undefined}
 					aria-label={item.label.zh}
 					title={item.label.zh}
 					data-aria-zh={item.label.zh}
 					data-aria-en={item.label.en}
 					class="social-btn"
 				>
-					<Icons name={item.icon} class="social-icon" />
+					<Icons spec={item.spec} class="social-icon" />
 				</a>
 			))
 		}
@@ -195,6 +195,7 @@ const { profile } = Astro.props;
 	.social-row {
 		margin-top: 1.25rem;
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		justify-content: center;
 		gap: 0.7rem;
