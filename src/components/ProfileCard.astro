@@ -12,6 +12,7 @@ const { profile } = Astro.props;
 
 <main
 	class="profile-card"
+	data-profile-card
 	aria-label={messages.zh.aria.profile}
 	data-aria-zh={messages.zh.aria.profile}
 	data-aria-en={messages.en.aria.profile}
@@ -30,16 +31,24 @@ const { profile } = Astro.props;
 		/>
 	</div>
 
-	<div class="avatar-wrap">
-		<img
-			src={profile.avatar}
-			alt={profile.name}
-			width="96"
-			height="96"
-			class="avatar"
-			loading="eager"
-			decoding="async"
-		/>
+	<div class="avatar-stage">
+		<button
+			type="button"
+			class="avatar-wrap"
+			data-avatar-trigger
+			aria-label={profile.name}
+		>
+			<img
+				src={profile.avatar}
+				alt={profile.name}
+				width="96"
+				height="96"
+				class="avatar"
+				loading="eager"
+				decoding="async"
+			/>
+		</button>
+		<span class="avatar-bubble" data-avatar-bubble aria-hidden="true"></span>
 	</div>
 
 	<div class="profile-body">
@@ -74,6 +83,7 @@ const { profile } = Astro.props;
 					data-aria-zh={item.label.zh}
 					data-aria-en={item.label.en}
 					data-aria-ja={item.label.ja}
+					data-brand={item.id}
 					class="social-btn"
 				>
 					<Icons spec={item.spec} class="social-icon" />
@@ -106,8 +116,60 @@ const { profile } = Astro.props;
 	</div>
 </main>
 
+<script>
+	import phrases from '../data/avatar-phrases.json';
+
+	// 1. Desktop 1px glass border spotlight
+	const card = document.querySelector<HTMLElement>('[data-profile-card]');
+	if (card && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+		card.addEventListener('pointermove', (e) => {
+			const rect = card.getBoundingClientRect();
+			card.style.setProperty('--mx', `${e.clientX - rect.left}px`);
+			card.style.setProperty('--my', `${e.clientY - rect.top}px`);
+			card.classList.add('is-lit');
+		});
+		card.addEventListener('pointerleave', () => {
+			card.classList.remove('is-lit');
+		});
+	}
+
+	// 2. Avatar click random micro-bubble easter egg
+	const avatarBtn = document.querySelector<HTMLButtonElement>('[data-avatar-trigger]');
+	const avatarBubble = document.querySelector<HTMLElement>('[data-avatar-bubble]');
+	if (avatarBtn && avatarBubble && phrases.length > 0) {
+		let lastIndex = -1;
+		let hideTimer: number | undefined;
+		let leaveTimer: number | undefined;
+
+		avatarBtn.addEventListener('click', () => {
+			let nextIndex = Math.floor(Math.random() * phrases.length);
+			if (phrases.length > 1 && nextIndex === lastIndex) {
+				nextIndex = (nextIndex + 1) % phrases.length;
+			}
+			lastIndex = nextIndex;
+
+			window.clearTimeout(hideTimer);
+			window.clearTimeout(leaveTimer);
+
+			avatarBubble.textContent = phrases[nextIndex];
+			avatarBubble.classList.remove('is-visible', 'is-leaving');
+			void avatarBubble.offsetWidth;
+			avatarBubble.classList.add('is-visible');
+
+			hideTimer = window.setTimeout(() => {
+				avatarBubble.classList.remove('is-visible');
+				avatarBubble.classList.add('is-leaving');
+				leaveTimer = window.setTimeout(() => {
+					avatarBubble.classList.remove('is-leaving');
+				}, 420);
+			}, 3200);
+		});
+	}
+</script>
+
 <style>
 	.profile-card {
+		position: relative;
 		width: 100%;
 		max-width: 26rem;
 		padding: 1.15rem 1.15rem 1.45rem;
@@ -122,6 +184,45 @@ const { profile } = Astro.props;
 			transform 300ms ease,
 			box-shadow 300ms ease,
 			background-color 300ms ease;
+	}
+
+	/* 1px glass border spotlight (desktop pointer only) */
+	.profile-card::before {
+		content: '';
+		position: absolute;
+		inset: -1px;
+		border-radius: inherit;
+		padding: 1.5px;
+		background: radial-gradient(
+			220px circle at var(--mx, -999px) var(--my, -999px),
+			rgba(255, 255, 255, 0.95),
+			rgba(29, 111, 232, 0.35) 45%,
+			transparent 75%
+		);
+		-webkit-mask:
+			linear-gradient(#fff 0 0) content-box,
+			linear-gradient(#fff 0 0);
+		-webkit-mask-composite: xor;
+		mask:
+			linear-gradient(#fff 0 0) content-box,
+			linear-gradient(#fff 0 0);
+		mask-composite: exclude;
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity 280ms ease;
+	}
+
+	:global(html.dark) .profile-card::before {
+		background: radial-gradient(
+			220px circle at var(--mx, -999px) var(--my, -999px),
+			rgba(255, 255, 255, 0.65),
+			rgba(147, 197, 253, 0.4) 45%,
+			transparent 75%
+		);
+	}
+
+	.profile-card.is-lit::before {
+		opacity: 1;
 	}
 
 	.banner-box {
@@ -144,17 +245,31 @@ const { profile } = Astro.props;
 		transform: scale(1.03);
 	}
 
-	.avatar-wrap {
+	.avatar-stage {
 		position: relative;
 		z-index: 2;
 		width: 6.25rem;
 		height: 6.25rem;
 		margin: -3.125rem auto 0;
+	}
+
+	.avatar-wrap {
+		width: 100%;
+		height: 100%;
+		border: 0;
 		border-radius: 9999px;
 		padding: 4px;
 		background: var(--card-ring);
 		box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.16);
-		transition: background-color 300ms ease;
+		cursor: pointer;
+		display: block;
+		transition:
+			background-color 300ms ease,
+			transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+	}
+
+	.avatar-wrap:active {
+		transform: scale(0.95);
 	}
 
 	.avatar {
@@ -164,11 +279,87 @@ const { profile } = Astro.props;
 		object-fit: cover;
 		display: block;
 		user-select: none;
-		transition: transform 500ms ease;
+		transition: transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
 	}
 
 	.avatar-wrap:hover .avatar {
-		transform: scale(1.05);
+		transform: scale(1.06);
+	}
+
+	.avatar-bubble {
+		position: absolute;
+		top: -0.45rem;
+		left: calc(100% - 0.35rem);
+		padding: 0.28rem 0.65rem;
+		border-radius: 9999px;
+		border-bottom-left-radius: 0.25rem;
+		background: var(--surface-card);
+		border: 1px solid var(--border-card);
+		backdrop-filter: blur(14px);
+		-webkit-backdrop-filter: blur(14px);
+		box-shadow: 0 8px 18px -4px rgba(15, 23, 42, 0.16);
+		color: var(--text-primary);
+		font-size: var(--text-caption);
+		font-weight: 500;
+		white-space: nowrap;
+		pointer-events: none;
+		transform-origin: bottom left;
+		opacity: 0;
+		transform: translateY(-6px) scale(0.9);
+		transition:
+			opacity 240ms ease,
+			transform 260ms ease;
+	}
+
+	.avatar-bubble.is-visible {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+		animation:
+			bubblePop 460ms cubic-bezier(0.22, 1, 0.36, 1) forwards,
+			bubbleFloat 1.4s ease-in-out 460ms infinite alternate;
+	}
+
+	.avatar-bubble.is-leaving {
+		animation: bubbleFadeOut 420ms cubic-bezier(0.4, 0, 1, 1) forwards;
+	}
+
+	@keyframes bubbleFadeOut {
+		from {
+			opacity: 1;
+			transform: translateY(0) scale(1);
+		}
+		to {
+			opacity: 0;
+			transform: translateY(-8px) scale(0.92);
+		}
+	}
+
+	@keyframes bubblePop {
+		0% {
+			opacity: 0;
+			transform: translate(-6px, 10px) scale(0.5) rotate(-7deg);
+		}
+		50% {
+			opacity: 1;
+			transform: translate(2px, -3px) scale(1.08) rotate(2deg);
+		}
+		78% {
+			opacity: 1;
+			transform: translate(0, 1px) scale(0.97) rotate(-0.8deg);
+		}
+		100% {
+			opacity: 1;
+			transform: translate(0, 0) scale(1) rotate(0deg);
+		}
+	}
+
+	@keyframes bubbleFloat {
+		from {
+			transform: translateY(0);
+		}
+		to {
+			transform: translateY(-3px);
+		}
 	}
 
 	.profile-body {
@@ -223,14 +414,62 @@ const { profile } = Astro.props;
 		justify-content: center;
 		text-decoration: none;
 		transition:
+			transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1),
 			background-color 200ms ease,
-			transform 200ms ease,
-			color 200ms ease;
+			border-color 200ms ease,
+			color 200ms ease,
+			box-shadow 220ms ease;
 	}
 
 	.social-btn:hover {
 		background: var(--surface-tint-hover);
-		transform: translateY(-2px);
+		transform: translateY(-3px) scale(1.06);
+	}
+
+	/* Brand-color wake-up on hover */
+	.social-btn[data-brand='x']:hover,
+	.social-btn[data-brand='github']:hover {
+		color: #18181b;
+		background: rgba(24, 24, 27, 0.08);
+		border-color: rgba(24, 24, 27, 0.18);
+		box-shadow: 0 6px 14px -4px rgba(24, 24, 27, 0.2);
+	}
+
+	:global(html.dark) .social-btn[data-brand='x']:hover,
+	:global(html.dark) .social-btn[data-brand='github']:hover {
+		color: #f8fafc;
+		background: rgba(248, 250, 252, 0.14);
+		border-color: rgba(248, 250, 252, 0.28);
+		box-shadow: 0 6px 14px -4px rgba(0, 0, 0, 0.4);
+	}
+
+	.social-btn[data-brand='bilibili']:hover {
+		color: #fb7299;
+		background: rgba(251, 114, 153, 0.14);
+		border-color: rgba(251, 114, 153, 0.3);
+		box-shadow: 0 6px 14px -4px rgba(251, 114, 153, 0.32);
+	}
+
+	.social-btn[data-brand='misskey']:hover {
+		color: #79a600;
+		background: rgba(134, 179, 0, 0.14);
+		border-color: rgba(134, 179, 0, 0.3);
+		box-shadow: 0 6px 14px -4px rgba(134, 179, 0, 0.28);
+	}
+
+	:global(html.dark) .social-btn[data-brand='misskey']:hover {
+		color: #a6d926;
+	}
+
+	.social-btn[data-brand='neteasemusic']:hover {
+		color: #e60026;
+		background: rgba(230, 0, 38, 0.12);
+		border-color: rgba(230, 0, 38, 0.28);
+		box-shadow: 0 6px 14px -4px rgba(230, 0, 38, 0.28);
+	}
+
+	:global(html.dark) .social-btn[data-brand='neteasemusic']:hover {
+		color: #ff4d6a;
 	}
 
 	:global(.social-icon) {
@@ -293,6 +532,7 @@ const { profile } = Astro.props;
 		display: block;
 	}
 
+	.avatar-wrap:focus-visible,
 	.social-btn:focus-visible,
 	.cta-btn:focus-visible {
 		outline: 2px solid var(--accent);

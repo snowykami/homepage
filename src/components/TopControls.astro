@@ -4,6 +4,55 @@ import Icons from './Icons.astro';
 ---
 
 <header class="top-controls">
+	<div class="lang-dropdown" data-lang-dropdown>
+		<button
+			type="button"
+			class="lang-trigger"
+			aria-haspopup="listbox"
+			aria-expanded="false"
+			aria-controls="lang-listbox"
+			aria-label={messages.zh.controls.langLabel}
+			data-lang-trigger
+			data-aria-zh={messages.zh.controls.langLabel}
+			data-aria-en={messages.en.controls.langLabel}
+			data-aria-ja={messages.ja.controls.langLabel}
+		>
+			<Icons name="globe" class="control-icon" />
+			<span class="lang-current" data-lang-current>中文</span>
+			<Icons name="chevron-down" class="chevron-icon" />
+		</button>
+
+		<ul
+			id="lang-listbox"
+			class="lang-menu"
+			role="listbox"
+			aria-label={messages.zh.controls.langLabel}
+			data-lang-menu
+			data-aria-zh={messages.zh.controls.langLabel}
+			data-aria-en={messages.en.controls.langLabel}
+			data-aria-ja={messages.ja.controls.langLabel}
+			hidden
+		>
+			{
+				LOCALE_OPTIONS.map((opt) => (
+					<li role="none">
+						<button
+							type="button"
+							role="option"
+							class="lang-option"
+							aria-selected={opt.value === 'zh' ? 'true' : 'false'}
+							data-lang-option={opt.value}
+							data-lang-label={opt.label}
+						>
+							<span>{opt.label}</span>
+							<span class="lang-dot" aria-hidden="true" />
+						</button>
+					</li>
+				))
+			}
+		</ul>
+	</div>
+
 	<div
 		class="segmented theme-switcher"
 		role="radiogroup"
@@ -56,55 +105,6 @@ import Icons from './Icons.astro';
 			<Icons name="moon" class="control-icon" />
 		</button>
 	</div>
-
-	<div class="lang-dropdown" data-lang-dropdown>
-		<button
-			type="button"
-			class="lang-trigger"
-			aria-haspopup="listbox"
-			aria-expanded="false"
-			aria-controls="lang-listbox"
-			aria-label={messages.zh.controls.langLabel}
-			data-lang-trigger
-			data-aria-zh={messages.zh.controls.langLabel}
-			data-aria-en={messages.en.controls.langLabel}
-			data-aria-ja={messages.ja.controls.langLabel}
-		>
-			<Icons name="globe" class="control-icon" />
-			<span class="lang-current" data-lang-current>中文</span>
-			<Icons name="chevron-down" class="chevron-icon" />
-		</button>
-
-		<ul
-			id="lang-listbox"
-			class="lang-menu"
-			role="listbox"
-			aria-label={messages.zh.controls.langLabel}
-			data-lang-menu
-			data-aria-zh={messages.zh.controls.langLabel}
-			data-aria-en={messages.en.controls.langLabel}
-			data-aria-ja={messages.ja.controls.langLabel}
-			hidden
-		>
-			{
-				LOCALE_OPTIONS.map((opt) => (
-					<li role="none">
-						<button
-							type="button"
-							role="option"
-							class="lang-option"
-							aria-selected={opt.value === 'zh' ? 'true' : 'false'}
-							data-lang-option={opt.value}
-							data-lang-label={opt.label}
-						>
-							<span>{opt.label}</span>
-							<span class="lang-dot" aria-hidden="true" />
-						</button>
-					</li>
-				))
-			}
-		</ul>
-	</div>
 </header>
 
 <style>
@@ -122,6 +122,7 @@ import Icons from './Icons.astro';
 		position: relative;
 		display: grid;
 		grid-template-columns: repeat(3, minmax(0, 1fr));
+		height: 2.25rem;
 		padding: 0.22rem;
 		border-radius: 9999px;
 		background: var(--surface-card);
@@ -160,7 +161,7 @@ import Icons from './Icons.astro';
 		align-items: center;
 		justify-content: center;
 		width: 1.95rem;
-		height: 1.75rem;
+		height: 100%;
 		border: 0;
 		border-radius: 9999px;
 		background: transparent;
@@ -181,8 +182,8 @@ import Icons from './Icons.astro';
 		display: inline-flex;
 		align-items: center;
 		gap: 0.4rem;
-		height: 2.2rem;
-		padding: 0 0.72rem;
+		height: 2.25rem;
+		padding: 0 0.75rem;
 		border-radius: 9999px;
 		background: var(--surface-card);
 		border: 1px solid var(--border-card);
