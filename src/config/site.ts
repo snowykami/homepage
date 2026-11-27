@@ -1,15 +1,10 @@
-export type Locale = 'zh' | 'en';
-
-export interface LocalizedText {
-	zh: string;
-	en: string;
-}
+import { localizedFrom, type LocalizedText } from '../i18n';
 
 export interface CtaLink {
-	id: 'blog' | 'projects';
+	id: 'blog' | 'status';
 	label: LocalizedText;
 	href: string;
-	icon: 'blog' | 'projects';
+	icon: 'blog' | 'status';
 	external?: boolean;
 }
 
@@ -23,9 +18,6 @@ export interface SiteConfig {
 	name: string;
 	siteUrl: string;
 	neoBlogApiUrl: string;
-	title: LocalizedText;
-	description: LocalizedText;
-	role: LocalizedText;
 	ctaLinks: CtaLink[];
 	socialLinks: FallbackSocialLink[];
 }
@@ -36,31 +28,19 @@ export const siteConfig: SiteConfig = {
 	neoBlogApiUrl:
 		import.meta.env.NEO_BLOG_API_URL ||
 		'https://blog.sfkm.me/api/v1/misc/public-config?keys=site_info',
-	title: {
-		zh: 'Snowykami - 个人主页',
-		en: 'Snowykami - Personal Website',
-	},
-	description: {
-		zh: 'Snowykami 的个人主页 — 全栈开发者',
-		en: 'Snowykami personal homepage — Full-stack developer',
-	},
-	role: {
-		zh: '全栈开发者',
-		en: 'Full-stack developer',
-	},
 	ctaLinks: [
 		{
 			id: 'blog',
-			label: { zh: '博客', en: 'Blog' },
+			label: localizedFrom((m) => m.cta.blog),
 			href: 'https://blog.sfkm.me',
 			icon: 'blog',
 			external: true,
 		},
 		{
-			id: 'projects',
-			label: { zh: '项目', en: 'Projects' },
-			href: 'https://github.com/snowykami?tab=repositories',
-			icon: 'projects',
+			id: 'status',
+			label: localizedFrom((m) => m.cta.status),
+			href: 'https://status.sfkm.me/',
+			icon: 'status',
 			external: true,
 		},
 	],

@@ -1,4 +1,5 @@
 ---
+import { LOCALE_OPTIONS, messages } from '../i18n';
 import Icons from './Icons.astro';
 ---
 
@@ -6,9 +7,10 @@ import Icons from './Icons.astro';
 	<div
 		class="segmented theme-switcher"
 		role="radiogroup"
-		aria-label="主题选择"
-		data-aria-zh="主题选择"
-		data-aria-en="Theme switcher"
+		aria-label={messages.zh.controls.themeLabel}
+		data-aria-zh={messages.zh.controls.themeLabel}
+		data-aria-en={messages.en.controls.themeLabel}
+		data-aria-ja={messages.ja.controls.themeLabel}
 	>
 		<span class="segmented-thumb" aria-hidden="true"></span>
 		<button
@@ -16,68 +18,92 @@ import Icons from './Icons.astro';
 			class="segmented-btn"
 			role="radio"
 			aria-checked="false"
+			aria-label={messages.zh.controls.light}
+			title={messages.zh.controls.light}
 			data-theme-value="light"
-			title="浅色"
-			data-aria-zh="浅色"
-			data-aria-en="Light"
+			data-aria-zh={messages.zh.controls.light}
+			data-aria-en={messages.en.controls.light}
+			data-aria-ja={messages.ja.controls.light}
 		>
 			<Icons name="sun" class="control-icon" />
-			<span class="control-label" data-i18n data-zh="浅色" data-en="Light">浅色</span>
 		</button>
 		<button
 			type="button"
 			class="segmented-btn"
 			role="radio"
 			aria-checked="true"
+			aria-label={messages.zh.controls.system}
+			title={messages.zh.controls.system}
 			data-theme-value="system"
-			title="系统"
-			data-aria-zh="系统"
-			data-aria-en="System"
+			data-aria-zh={messages.zh.controls.system}
+			data-aria-en={messages.en.controls.system}
+			data-aria-ja={messages.ja.controls.system}
 		>
 			<Icons name="monitor" class="control-icon" />
-			<span class="control-label" data-i18n data-zh="系统" data-en="System">系统</span>
 		</button>
 		<button
 			type="button"
 			class="segmented-btn"
 			role="radio"
 			aria-checked="false"
+			aria-label={messages.zh.controls.dark}
+			title={messages.zh.controls.dark}
 			data-theme-value="dark"
-			title="深色"
-			data-aria-zh="深色"
-			data-aria-en="Dark"
+			data-aria-zh={messages.zh.controls.dark}
+			data-aria-en={messages.en.controls.dark}
+			data-aria-ja={messages.ja.controls.dark}
 		>
 			<Icons name="moon" class="control-icon" />
-			<span class="control-label" data-i18n data-zh="深色" data-en="Dark">深色</span>
 		</button>
 	</div>
 
-	<div
-		class="segmented lang-switcher"
-		role="radiogroup"
-		aria-label="语言选择"
-		data-aria-zh="语言选择"
-		data-aria-en="Language switcher"
-	>
-		<span class="segmented-thumb" aria-hidden="true"></span>
+	<div class="lang-dropdown" data-lang-dropdown>
 		<button
 			type="button"
-			class="segmented-btn"
-			role="radio"
-			aria-checked="true"
-			data-lang-value="zh"
+			class="lang-trigger"
+			aria-haspopup="listbox"
+			aria-expanded="false"
+			aria-controls="lang-listbox"
+			aria-label={messages.zh.controls.langLabel}
+			data-lang-trigger
+			data-aria-zh={messages.zh.controls.langLabel}
+			data-aria-en={messages.en.controls.langLabel}
+			data-aria-ja={messages.ja.controls.langLabel}
 		>
-			<span>文</span>
+			<Icons name="globe" class="control-icon" />
+			<span class="lang-current" data-lang-current>中文</span>
+			<Icons name="chevron-down" class="chevron-icon" />
 		</button>
-		<button
-			type="button"
-			class="segmented-btn"
-			role="radio"
-			aria-checked="false"
-			data-lang-value="en"
+
+		<ul
+			id="lang-listbox"
+			class="lang-menu"
+			role="listbox"
+			aria-label={messages.zh.controls.langLabel}
+			data-lang-menu
+			data-aria-zh={messages.zh.controls.langLabel}
+			data-aria-en={messages.en.controls.langLabel}
+			data-aria-ja={messages.ja.controls.langLabel}
+			hidden
 		>
-			<span>En</span>
-		</button>
+			{
+				LOCALE_OPTIONS.map((opt) => (
+					<li role="none">
+						<button
+							type="button"
+							role="option"
+							class="lang-option"
+							aria-selected={opt.value === 'zh' ? 'true' : 'false'}
+							data-lang-option={opt.value}
+							data-lang-label={opt.label}
+						>
+							<span>{opt.label}</span>
+							<span class="lang-dot" aria-hidden="true" />
+						</button>
+					</li>
+				))
+			}
+		</ul>
 	</div>
 </header>
 
@@ -89,49 +115,34 @@ import Icons from './Icons.astro';
 		z-index: 20;
 		display: flex;
 		align-items: center;
-		gap: 0.6rem;
+		gap: 0.55rem;
 	}
 
 	.segmented {
 		position: relative;
 		display: grid;
-		padding: 0.2rem;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		padding: 0.22rem;
 		border-radius: 9999px;
-		background: var(--track-bg);
-		border: 1px solid var(--track-border);
+		background: var(--surface-card);
+		border: 1px solid var(--border-card);
 		backdrop-filter: blur(12px);
 		-webkit-backdrop-filter: blur(12px);
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 	}
 
-	.theme-switcher {
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-	}
-
-	.lang-switcher {
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-	}
-
 	.segmented-thumb {
 		position: absolute;
-		top: 0.2rem;
-		bottom: 0.2rem;
-		left: 0.2rem;
+		top: 0.22rem;
+		bottom: 0.22rem;
+		left: 0.22rem;
+		width: calc((100% - 0.44rem) / 3);
 		border-radius: 9999px;
-		background: var(--thumb-bg);
+		background: var(--surface-thumb);
 		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 		transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
 	}
 
-	.theme-switcher .segmented-thumb {
-		width: calc((100% - 0.4rem) / 3);
-	}
-
-	.lang-switcher .segmented-thumb {
-		width: calc((100% - 0.4rem) / 2);
-	}
-
-	/* Driven directly from <html data-theme-mode / data-lang> set in <head> for zero first-paint jump */
 	:global(html[data-theme-mode='light']) .theme-switcher .segmented-thumb {
 		transform: translateX(0%);
 	}
@@ -142,55 +153,159 @@ import Icons from './Icons.astro';
 		transform: translateX(200%);
 	}
 
-	:global(html[data-lang='zh']) .lang-switcher .segmented-thumb {
-		transform: translateX(0%);
-	}
-	:global(html[data-lang='en']) .lang-switcher .segmented-thumb {
-		transform: translateX(100%);
-	}
-
 	.segmented-btn {
 		position: relative;
 		z-index: 1;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		gap: 0.3rem;
-		padding: 0.35rem 0.65rem;
+		width: 1.95rem;
+		height: 1.75rem;
 		border: 0;
 		border-radius: 9999px;
 		background: transparent;
-		color: var(--control-text);
-		font-size: 0.78rem;
-		font-weight: 500;
+		color: var(--text-secondary);
 		cursor: pointer;
-		white-space: nowrap;
 		transition: color 200ms ease;
 	}
 
 	.segmented-btn.is-active {
-		color: var(--control-text-active);
+		color: var(--text-primary);
 	}
 
-	.segmented-btn:focus-visible {
-		outline: 2px solid var(--blue-accent);
+	.lang-dropdown {
+		position: relative;
+	}
+
+	.lang-trigger {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		height: 2.2rem;
+		padding: 0 0.72rem;
+		border-radius: 9999px;
+		background: var(--surface-card);
+		border: 1px solid var(--border-card);
+		backdrop-filter: blur(12px);
+		-webkit-backdrop-filter: blur(12px);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+		color: var(--text-primary);
+		font-family: inherit;
+		font-size: var(--text-caption);
+		font-weight: 500;
+		cursor: pointer;
+		transition:
+			background-color 200ms ease,
+			transform 200ms ease;
+	}
+
+	.lang-trigger:hover {
+		background: var(--surface-thumb);
+	}
+
+	.lang-trigger[aria-expanded='true'] :global(.chevron-icon) {
+		transform: rotate(180deg);
+	}
+
+	.lang-menu {
+		position: absolute;
+		top: calc(100% + 0.45rem);
+		right: 0;
+		min-width: 7.5rem;
+		padding: 0.32rem;
+		list-style: none;
+		border-radius: 1rem;
+		background: var(--surface-card);
+		border: 1px solid var(--border-card);
+		backdrop-filter: blur(18px);
+		-webkit-backdrop-filter: blur(18px);
+		box-shadow: var(--card-shadow);
+		display: flex;
+		flex-direction: column;
+		gap: 0.15rem;
+		transform-origin: top right;
+		animation: menuIn 150ms cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+
+	.lang-menu[hidden] {
+		display: none;
+	}
+
+	@keyframes menuIn {
+		from {
+			opacity: 0;
+			transform: translateY(-4px) scale(0.96);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0) scale(1);
+		}
+	}
+
+	.lang-option {
+		width: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.65rem;
+		padding: 0.45rem 0.7rem;
+		border: 0;
+		border-radius: 0.7rem;
+		background: transparent;
+		color: var(--text-secondary);
+		font-family: inherit;
+		font-size: var(--text-caption);
+		font-weight: 500;
+		text-align: left;
+		cursor: pointer;
+		transition:
+			background-color 150ms ease,
+			color 150ms ease;
+	}
+
+	.lang-option:hover {
+		background: var(--surface-tint);
+		color: var(--text-primary);
+	}
+
+	.lang-option.is-active {
+		background: var(--surface-tint);
+		color: var(--accent);
+		font-weight: 600;
+	}
+
+	.lang-dot {
+		width: 0.38rem;
+		height: 0.38rem;
+		border-radius: 9999px;
+		background: var(--accent);
+		opacity: 0;
+		transition: opacity 150ms ease;
+	}
+
+	.lang-option.is-active .lang-dot {
+		opacity: 1;
+	}
+
+	.segmented-btn:focus-visible,
+	.lang-trigger:focus-visible,
+	.lang-option:focus-visible {
+		outline: 2px solid var(--accent);
 		outline-offset: 2px;
 	}
 
 	:global(.control-icon) {
-		width: 0.9rem;
-		height: 0.9rem;
+		width: 0.95rem;
+		height: 0.95rem;
 		flex-shrink: 0;
 		display: block;
 	}
 
-	.control-label {
-		display: none;
-	}
-
-	@media (min-width: 640px) {
-		.control-label {
-			display: inline;
-		}
+	:global(.chevron-icon) {
+		width: 0.82rem;
+		height: 0.82rem;
+		flex-shrink: 0;
+		opacity: 0.75;
+		transition: transform 200ms ease;
 	}
 </style>

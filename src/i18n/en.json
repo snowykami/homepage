@@ -1,0 +1,26 @@
+{
+	"site": {
+		"titleSuffix": "Personal Website",
+		"description": "{name} personal homepage — Full-stack developer",
+		"role": "Full-stack developer"
+	},
+	"cta": {
+		"blog": "Blog",
+		"status": "Status"
+	},
+	"controls": {
+		"themeLabel": "Theme switcher",
+		"light": "Light",
+		"system": "System",
+		"dark": "Dark",
+		"langLabel": "Language switcher"
+	},
+	"aria": {
+		"profile": "Personal profile",
+		"social": "Social links"
+	},
+	"notFound": {
+		"message": "Page not found",
+		"back": "Back to Home"
+	}
+}

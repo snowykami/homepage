@@ -2,7 +2,8 @@ import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
-import { siteConfig, type CtaLink, type LocalizedText } from '../config/site';
+import { siteConfig, type CtaLink } from '../config/site';
+import { localizedFrom, type LocalizedText } from '../i18n';
 import {
 	resolveSocialLinks,
 	type RawOwnerLink,
@@ -143,10 +144,10 @@ async function optimizeLocalImages(
 		),
 		// Pre-blur & slightly boost saturation at build time so CSS needs zero runtime GPU blur filter
 		sharp(bannerBuf)
-			.resize({ width: 96, withoutEnlargement: true })
-			.modulate({ saturation: 1.12 })
-			.blur(6)
-			.webp({ quality: 58, effort: 6 })
+			.resize({ width: 320, withoutEnlargement: true })
+			.modulate({ saturation: 1.1 })
+			.blur(3.5)
+			.webp({ quality: 52, effort: 6 })
 			.toBuffer(),
 		syncHashedAsset('avatar', avatarFile, () =>
 			sharp(avatarBuf)
@@ -172,7 +173,7 @@ async function loadNeoBlogProfile(): Promise<ResolvedProfile> {
 	let remoteAvatar = '';
 	let remoteBanner = '';
 	let baseUrl = 'https://blog.sfkm.me';
-	let enDesc = siteConfig.role.en;
+	let enDesc = '';
 	let rawLinks: RawOwnerLink[] | null = null;
 	let source: ResolvedProfile['source'] = 'fallback';
 
@@ -208,24 +209,26 @@ async function loadNeoBlogProfile(): Promise<ResolvedProfile> {
 			? resolvedFromApi
 			: resolveSocialLinks(siteConfig.socialLinks, siteConfig.siteUrl);
 
-	const githubUrl = socialLinks.find((l) => l.id === 'github')?.href;
-
 	const ctaLinks: CtaLink[] = [
 		{
 			id: 'blog',
-			label: { zh: '博客', en: 'Blog' },
+			label: localizedFrom((m) => m.cta.blog),
 			href: baseUrl,
 			icon: 'blog',
 			external: true,
 		},
-		{
-			id: 'projects',
-			label: { zh: '项目', en: 'Projects' },
-			href: githubUrl ? `${githubUrl}?tab=repositories` : siteConfig.ctaLinks[1].href,
-			icon: 'projects',
-			external: true,
-		},
+		siteConfig.ctaLinks[1],
 	];
+
+	const role = localizedFrom((m) => m.site.role);
+	if (enDesc) {
+		role.en = enDesc;
+	}
+
+	const description = localizedFrom((m) => m.site.description, { name });
+	if (enDesc) {
+		description.en = `${name} personal homepage — ${enDesc}`;
+	}
 
 	return {
 		name,
@@ -235,17 +238,12 @@ async function loadNeoBlogProfile(): Promise<ResolvedProfile> {
 		bannerHeight: optimized.bannerHeight,
 		bannerBgDataUri: optimized.bannerBgDataUri,
 		title: {
-			zh: `${name} - 个人主页`,
-			en: `${name} - Personal Website`,
+			zh: `${name} - ${localizedFrom((m) => m.site.titleSuffix).zh}`,
+			en: `${name} - ${localizedFrom((m) => m.site.titleSuffix).en}`,
+			ja: `${name} - ${localizedFrom((m) => m.site.titleSuffix).ja}`,
 		},
-		description: {
-			zh: `${name} 的个人主页 — ${siteConfig.role.zh}`,
-			en: `${name} personal homepage — ${enDesc}`,
-		},
-		role: {
-			zh: siteConfig.role.zh,
-			en: enDesc,
-		},
+		description,
+		role,
 		ctaLinks,
 		socialLinks,
 		source,

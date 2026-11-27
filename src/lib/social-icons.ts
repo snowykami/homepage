@@ -1,5 +1,5 @@
 import socialIconsData from '../data/social-icons.generated.json' with { type: 'json' };
-import type { LocalizedText } from '../config/site';
+import type { LocalizedText } from '../i18n';
 
 export type SvgChildTag =
 	| 'path'
@@ -55,7 +55,7 @@ const brandMap = new Map<string, GeneratedSocialIcon>(
 
 const COMMON_LUCIDE_SPECS: Record<string, { label: LocalizedText; spec: ResolvedIconSpec }> = {
 	globe: {
-		label: { zh: '网站', en: 'Website' },
+		label: { zh: '网站', en: 'Website', ja: 'Webサイト' },
 		spec: {
 			viewBox: '0 0 24 24',
 			stroke: true,
@@ -67,7 +67,7 @@ const COMMON_LUCIDE_SPECS: Record<string, { label: LocalizedText; spec: Resolved
 		},
 	},
 	mail: {
-		label: { zh: '邮箱', en: 'Email' },
+		label: { zh: '邮箱', en: 'Email', ja: 'メール' },
 		spec: {
 			viewBox: '0 0 24 24',
 			stroke: true,
@@ -78,7 +78,7 @@ const COMMON_LUCIDE_SPECS: Record<string, { label: LocalizedText; spec: Resolved
 		},
 	},
 	phone: {
-		label: { zh: '电话', en: 'Phone' },
+		label: { zh: '电话', en: 'Phone', ja: '電話' },
 		spec: {
 			viewBox: '0 0 24 24',
 			stroke: true,
@@ -93,7 +93,7 @@ const COMMON_LUCIDE_SPECS: Record<string, { label: LocalizedText; spec: Resolved
 		},
 	},
 	'message-square': {
-		label: { zh: '消息', en: 'Message' },
+		label: { zh: '消息', en: 'Message', ja: 'メッセージ' },
 		spec: {
 			viewBox: '0 0 24 24',
 			stroke: true,
@@ -106,7 +106,7 @@ const COMMON_LUCIDE_SPECS: Record<string, { label: LocalizedText; spec: Resolved
 		},
 	},
 	link: {
-		label: { zh: '链接', en: 'Link' },
+		label: { zh: '链接', en: 'Link', ja: 'リンク' },
 		spec: {
 			viewBox: '0 0 24 24',
 			stroke: true,
@@ -123,7 +123,7 @@ const COMMON_LUCIDE_SPECS: Record<string, { label: LocalizedText; spec: Resolved
 		},
 	},
 	rss: {
-		label: { zh: 'RSS', en: 'RSS' },
+		label: { zh: 'RSS', en: 'RSS', ja: 'RSS' },
 		spec: {
 			viewBox: '0 0 24 24',
 			stroke: true,
@@ -250,18 +250,20 @@ function inferIconFromUrl(rawUrl: string): string | null {
 
 function buildLocalizedLabel(rawLabel: string, fallbackIcon: string): LocalizedText {
 	if (fallbackIcon === 'brand:neteasemusic') {
-		return { zh: '网易云音乐', en: 'NetEase Cloud Music' };
+		return { zh: '网易云音乐', en: 'NetEase Cloud Music', ja: 'NetEase Cloud Music' };
 	}
 	const match = rawLabel.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
 	if (match) {
 		const [, main, sub] = match;
-		// e.g. "哔哩哔哩 (Bilibili)" -> zh: 哔哩哔哩, en: Bilibili; "X (Twitter)" -> both "X (Twitter)"
+		// e.g. "哔哩哔哩 (Bilibili)" -> zh: 哔哩哔哩, en/ja: Bilibili; "X (Twitter)" -> all "X (Twitter)"
 		if (/[\u4e00-\u9fa5]/.test(main) && !/[\u4e00-\u9fa5]/.test(sub)) {
-			return { zh: main.trim(), en: sub.trim() };
+			return { zh: main.trim(), en: sub.trim(), ja: sub.trim() };
 		}
-		return { zh: rawLabel.trim(), en: rawLabel.trim() };
+		const trimmed = rawLabel.trim();
+		return { zh: trimmed, en: trimmed, ja: trimmed };
 	}
-	return { zh: rawLabel.trim(), en: rawLabel.trim() };
+	const trimmed = rawLabel.trim();
+	return { zh: trimmed, en: trimmed, ja: trimmed };
 }
 
 export function resolveSocialLinks(
@@ -287,14 +289,17 @@ export function resolveSocialLinks(
 		const brandEntry = brandMap.get(effectiveIcon);
 		if (brandEntry) {
 			spec = brandEntry.spec;
-			label = item.name?.trim()
-				? { zh: item.name.trim(), en: item.name.trim() }
+			const customName = item.name?.trim();
+			label = customName
+				? { zh: customName, en: customName, ja: customName }
 				: buildLocalizedLabel(brandEntry.label, effectiveIcon);
 		} else {
 			const lucideEntry = COMMON_LUCIDE_SPECS[effectiveIcon] ?? COMMON_LUCIDE_SPECS.globe;
 			spec = lucideEntry.spec;
 			const customName = item.name?.trim();
-			label = customName ? { zh: customName, en: customName } : lucideEntry.label;
+			label = customName
+				? { zh: customName, en: customName, ja: customName }
+				: lucideEntry.label;
 		}
 
 		const isHttp = /^https?:/i.test(rawUrl);

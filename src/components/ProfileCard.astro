@@ -1,4 +1,5 @@
 ---
+import { messages } from '../i18n';
 import type { ResolvedProfile } from '../lib/neo-blog';
 import Icons from './Icons.astro';
 
@@ -11,9 +12,10 @@ const { profile } = Astro.props;
 
 <main
 	class="profile-card"
-	aria-label="个人简介"
-	data-aria-zh="个人简介"
-	data-aria-en="Personal profile"
+	aria-label={messages.zh.aria.profile}
+	data-aria-zh={messages.zh.aria.profile}
+	data-aria-en={messages.en.aria.profile}
+	data-aria-ja={messages.ja.aria.profile}
 >
 	<div class="banner-box">
 		<img
@@ -48,6 +50,7 @@ const { profile } = Astro.props;
 			data-i18n
 			data-zh={profile.role.zh}
 			data-en={profile.role.en}
+			data-ja={profile.role.ja}
 		>
 			{profile.role.zh}
 		</p>
@@ -55,9 +58,10 @@ const { profile } = Astro.props;
 
 	<div
 		class="social-row"
-		aria-label="社交链接"
-		data-aria-zh="社交链接"
-		data-aria-en="Social links"
+		aria-label={messages.zh.aria.social}
+		data-aria-zh={messages.zh.aria.social}
+		data-aria-en={messages.en.aria.social}
+		data-aria-ja={messages.ja.aria.social}
 	>
 		{
 			profile.socialLinks.map((item) => (
@@ -69,6 +73,7 @@ const { profile } = Astro.props;
 					title={item.label.zh}
 					data-aria-zh={item.label.zh}
 					data-aria-en={item.label.en}
+					data-aria-ja={item.label.ja}
 					class="social-btn"
 				>
 					<Icons spec={item.spec} class="social-icon" />
@@ -87,7 +92,12 @@ const { profile } = Astro.props;
 					class={`cta-btn ${item.id === 'blog' ? 'cta-primary' : 'cta-secondary'}`}
 				>
 					<Icons name={item.icon} class="cta-icon" />
-					<span data-i18n data-zh={item.label.zh} data-en={item.label.en}>
+					<span
+						data-i18n
+						data-zh={item.label.zh}
+						data-en={item.label.en}
+						data-ja={item.label.ja}
+					>
 						{item.label.zh}
 					</span>
 				</a>
@@ -100,10 +110,10 @@ const { profile } = Astro.props;
 	.profile-card {
 		width: 100%;
 		max-width: 26rem;
-		padding: 1.15rem 1.15rem 1.5rem;
+		padding: 1.15rem 1.15rem 1.45rem;
 		border-radius: 1.5rem;
-		background: var(--card-bg);
-		border: 1px solid var(--card-border);
+		background: var(--surface-card);
+		border: 1px solid var(--border-card);
 		backdrop-filter: blur(18px);
 		-webkit-backdrop-filter: blur(18px);
 		box-shadow: var(--card-shadow);
@@ -119,7 +129,7 @@ const { profile } = Astro.props;
 		aspect-ratio: 16 / 9.2;
 		border-radius: 1rem;
 		overflow: hidden;
-		background: #cbd5e1;
+		background: var(--surface-muted);
 	}
 
 	.banner-img {
@@ -170,7 +180,7 @@ const { profile } = Astro.props;
 	}
 
 	.profile-name {
-		font-size: 1.6rem;
+		font-size: var(--text-title);
 		line-height: 1.25;
 		font-weight: 700;
 		letter-spacing: -0.01em;
@@ -182,12 +192,12 @@ const { profile } = Astro.props;
 		width: 1.75rem;
 		height: 0.25rem;
 		border-radius: 9999px;
-		background: var(--blue-accent);
+		background: var(--accent);
 	}
 
 	.profile-role {
 		margin-top: 0.1rem;
-		font-size: 0.96rem;
+		font-size: var(--text-body);
 		font-weight: 400;
 		color: var(--text-secondary);
 	}
@@ -205,8 +215,9 @@ const { profile } = Astro.props;
 		width: 3rem;
 		height: 3rem;
 		border-radius: 0.9rem;
-		background: var(--squircle-bg);
-		color: var(--blue-accent);
+		background: var(--surface-tint);
+		border: 1px solid var(--border-tint);
+		color: var(--accent);
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
@@ -218,7 +229,7 @@ const { profile } = Astro.props;
 	}
 
 	.social-btn:hover {
-		background: var(--squircle-bg-hover);
+		background: var(--surface-tint-hover);
 		transform: translateY(-2px);
 	}
 
@@ -242,7 +253,7 @@ const { profile } = Astro.props;
 		gap: 0.45rem;
 		padding: 0.68rem 1rem;
 		border-radius: 0.85rem;
-		font-size: 0.92rem;
+		font-size: var(--text-body);
 		font-weight: 600;
 		text-decoration: none;
 		white-space: nowrap;
@@ -256,21 +267,23 @@ const { profile } = Astro.props;
 	}
 
 	.cta-primary {
-		background: var(--blue-accent);
+		background: #1d6fe8;
+		border: 1px solid transparent;
 		color: #ffffff;
 	}
 
 	.cta-primary:hover {
-		background: var(--blue-accent-hover);
+		background: #1558c0;
 	}
 
 	.cta-secondary {
-		background: var(--cta-secondary-bg);
-		color: var(--cta-secondary-text);
+		background: var(--surface-muted);
+		border: 1px solid var(--border-subtle);
+		color: var(--text-primary);
 	}
 
 	.cta-secondary:hover {
-		background: var(--cta-secondary-hover);
+		background: var(--surface-muted-hover);
 	}
 
 	:global(.cta-icon) {
@@ -282,7 +295,7 @@ const { profile } = Astro.props;
 
 	.social-btn:focus-visible,
 	.cta-btn:focus-visible {
-		outline: 2px solid var(--blue-accent);
+		outline: 2px solid var(--accent);
 		outline-offset: 2px;
 	}
 </style>

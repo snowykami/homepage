@@ -1,6 +1,6 @@
 ---
-import type { LocalizedText } from '../config/site';
 import { siteConfig } from '../config/site';
+import type { LocalizedText } from '../i18n';
 
 interface Props {
 	title: LocalizedText;
@@ -51,7 +51,7 @@ const safeJsonLd = jsonLd ? JSON.stringify(jsonLd).replace(/</g, '\\u003c') : un
 		<meta name="description" content={description} />
 		<meta name="author" content={author} />
 		<meta name="generator" content={Astro.generator} />
-		<title data-zh={title.zh} data-en={title.en}>{title.zh}</title>
+		<title data-zh={title.zh} data-en={title.en} data-ja={title.ja}>{title.zh}</title>
 
 		{
 			canonicalUrl && ogImage && (
@@ -90,18 +90,20 @@ const safeJsonLd = jsonLd ? JSON.stringify(jsonLd).replace(/</g, '\\u003c') : un
 
 					const savedLang = localStorage.getItem('lang');
 					const isCrawler =
-						/bot|crawl|spider|slurp|google|bing|baidu|yandex|duckduck|sogou|bytespider|applebot/i.test(
+						/bot|crawl|spider|slurp|google|bing|baidu|yandex|duckduck|sogou|bytespider|applebot|petalbot|gptbot|claudebot|perplexitybot|oai-searchbot|facebookexternalhit|twitterbot|telegrambot|discordbot/i.test(
 							navigator.userAgent || '',
 						);
 					const browserLang = (navigator.languages?.[0] || navigator.language || '').toLowerCase();
 					const lang =
-						savedLang === 'en' || savedLang === 'zh'
+						savedLang === 'zh' || savedLang === 'en' || savedLang === 'ja'
 							? savedLang
 							: isCrawler || browserLang.startsWith('zh')
 								? 'zh'
-								: 'en';
+								: browserLang.startsWith('ja')
+									? 'ja'
+									: 'en';
 					root.dataset.lang = lang;
-					root.lang = lang === 'en' ? 'en' : 'zh-CN';
+					root.lang = lang === 'zh' ? 'zh-CN' : lang;
 				} catch {}
 			})();
 		</script>
@@ -117,12 +119,16 @@ const safeJsonLd = jsonLd ? JSON.stringify(jsonLd).replace(/</g, '\\u003c') : un
 
 		<script>
 			type ThemeMode = 'light' | 'system' | 'dark';
-			type LangMode = 'zh' | 'en';
+			type LangMode = 'zh' | 'en' | 'ja';
 
 			const root = document.documentElement;
 			const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 			const themeButtons = document.querySelectorAll<HTMLButtonElement>('[data-theme-value]');
-			const langButtons = document.querySelectorAll<HTMLButtonElement>('[data-lang-value]');
+			const langDropdown = document.querySelector<HTMLElement>('[data-lang-dropdown]');
+			const langTrigger = document.querySelector<HTMLButtonElement>('[data-lang-trigger]');
+			const langCurrent = document.querySelector<HTMLElement>('[data-lang-current]');
+			const langMenu = document.querySelector<HTMLElement>('[data-lang-menu]');
+			const langOptions = document.querySelectorAll<HTMLButtonElement>('[data-lang-option]');
 			const i18nNodes = document.querySelectorAll<HTMLElement>('[data-i18n]');
 			const ariaNodes = document.querySelectorAll<HTMLElement>('[data-aria-zh][data-aria-en]');
 			const titleEl = document.querySelector<HTMLTitleElement>('title[data-zh][data-en]');
@@ -133,7 +139,14 @@ const safeJsonLd = jsonLd ? JSON.stringify(jsonLd).replace(/</g, '\\u003c') : un
 			}
 
 			function getInitialLang(): LangMode {
-				return root.dataset.lang === 'en' ? 'en' : 'zh';
+				const lang = root.dataset.lang;
+				return lang === 'en' || lang === 'ja' || lang === 'zh' ? lang : 'zh';
+			}
+
+			function setMenuOpen(open: boolean): void {
+				if (!langTrigger || !langMenu) return;
+				langTrigger.setAttribute('aria-expanded', String(open));
+				langMenu.hidden = !open;
 			}
 
 			function applyTheme(mode: ThemeMode): void {
@@ -149,7 +162,7 @@ const safeJsonLd = jsonLd ? JSON.stringify(jsonLd).replace(/</g, '\\u003c') : un
 
 			function applyLang(lang: LangMode): void {
 				root.dataset.lang = lang;
-				root.lang = lang === 'en' ? 'en' : 'zh-CN';
+				root.lang = lang === 'zh' ? 'zh-CN' : lang;
 				if (titleEl) {
 					const nextTitle = titleEl.dataset[lang];
 					if (nextTitle) document.title = nextTitle;
@@ -158,8 +171,10 @@ const safeJsonLd = jsonLd ? JSON.stringify(jsonLd).replace(/</g, '\\u003c') : un
 					const text = node.dataset[lang];
 					if (text) node.textContent = text;
 				});
+				const ariaKey =
+					lang === 'en' ? 'ariaEn' : lang === 'ja' ? 'ariaJa' : 'ariaZh';
 				ariaNodes.forEach((node) => {
-					const label = lang === 'en' ? node.dataset.ariaEn : node.dataset.ariaZh;
+					const label = node.dataset[ariaKey] || node.dataset.ariaEn;
 					if (label) {
 						node.setAttribute('aria-label', label);
 						if (node.hasAttribute('title')) {
@@ -167,10 +182,13 @@ const safeJsonLd = jsonLd ? JSON.stringify(jsonLd).replace(/</g, '\\u003c') : un
 						}
 					}
 				});
-				langButtons.forEach((btn) => {
-					const active = btn.dataset.langValue === lang;
-					btn.setAttribute('aria-checked', String(active));
-					btn.classList.toggle('is-active', active);
+				langOptions.forEach((opt) => {
+					const active = opt.dataset.langOption === lang;
+					opt.setAttribute('aria-selected', String(active));
+					opt.classList.toggle('is-active', active);
+					if (active && langCurrent && opt.dataset.langLabel) {
+						langCurrent.textContent = opt.dataset.langLabel;
+					}
 				});
 			}
 
@@ -189,14 +207,35 @@ const safeJsonLd = jsonLd ? JSON.stringify(jsonLd).replace(/</g, '\\u003c') : un
 				});
 			});
 
-			langButtons.forEach((btn) => {
-				btn.addEventListener('click', () => {
-					const next = btn.dataset.langValue as LangMode | undefined;
-					if (!next) return;
+			langTrigger?.addEventListener('click', (e) => {
+				e.stopPropagation();
+				const isOpen = langTrigger.getAttribute('aria-expanded') === 'true';
+				setMenuOpen(!isOpen);
+			});
+
+			langOptions.forEach((opt) => {
+				opt.addEventListener('click', () => {
+					const next = opt.dataset.langOption as LangMode | undefined;
+					if (next !== 'zh' && next !== 'en' && next !== 'ja') return;
 					currentLang = next;
 					localStorage.setItem('lang', next);
 					applyLang(next);
+					setMenuOpen(false);
+					langTrigger?.focus();
 				});
+			});
+
+			document.addEventListener('click', (e) => {
+				if (langDropdown && !langDropdown.contains(e.target as Node)) {
+					setMenuOpen(false);
+				}
+			});
+
+			document.addEventListener('keydown', (e) => {
+				if (e.key === 'Escape' && langTrigger?.getAttribute('aria-expanded') === 'true') {
+					setMenuOpen(false);
+					langTrigger.focus();
+				}
 			});
 
 			mediaQuery.addEventListener('change', () => {
@@ -210,51 +249,52 @@ const safeJsonLd = jsonLd ? JSON.stringify(jsonLd).replace(/</g, '\\u003c') : un
 
 <style is:global>
 	:root {
-		--bg-overlay: rgba(241, 245, 249, 0.56);
-		--card-bg: rgba(255, 255, 255, 0.9);
-		--card-border: rgba(255, 255, 255, 0.85);
+		/* Typography scale (3 sizes across the entire site) */
+		--text-title: 1.5rem;
+		--text-body: 0.9375rem;
+		--text-caption: 0.8125rem;
+
+		/* Light palette */
+		--bg-overlay: rgba(241, 245, 249, 0.48);
+		--surface-card: rgba(255, 255, 255, 0.82);
+		--surface-muted: rgba(15, 23, 42, 0.06);
+		--surface-muted-hover: rgba(15, 23, 42, 0.11);
+		--surface-tint: rgba(29, 111, 232, 0.1);
+		--surface-tint-hover: rgba(29, 111, 232, 0.18);
+		--surface-thumb: #ffffff;
+		--border-card: rgba(255, 255, 255, 0.85);
+		--border-subtle: rgba(15, 23, 42, 0.09);
+		--border-tint: rgba(29, 111, 232, 0.16);
 		--card-ring: #ffffff;
 		--card-shadow:
 			0 20px 40px -15px rgba(15, 23, 42, 0.14),
 			0 4px 12px -2px rgba(15, 23, 42, 0.06);
-		--text-primary: #1e293b;
-		--text-secondary: #64748b;
-		--blue-accent: #1d6fe8;
-		--blue-accent-hover: #1558c0;
-		--squircle-bg: #eff6ff;
-		--squircle-bg-hover: #dbeafe;
-		--cta-secondary-bg: #f1f5f9;
-		--cta-secondary-hover: #e2e8f0;
-		--cta-secondary-text: #334155;
-		--track-bg: rgba(255, 255, 255, 0.68);
-		--track-border: rgba(255, 255, 255, 0.75);
-		--thumb-bg: rgba(255, 255, 255, 0.95);
-		--control-text: #64748b;
-		--control-text-active: #0f172a;
+		--text-primary: #0f172a;
+		--text-secondary: #475569;
+		--accent: #1d6fe8;
+		--accent-hover: #1558c0;
 	}
 
 	html.dark {
-		--bg-overlay: rgba(10, 15, 28, 0.72);
-		--card-bg: rgba(15, 23, 42, 0.84);
-		--card-border: rgba(148, 163, 184, 0.18);
+		/* Dark palette */
+		--bg-overlay: rgba(9, 13, 24, 0.72);
+		--surface-card: rgba(15, 23, 42, 0.84);
+		--surface-muted: rgba(255, 255, 255, 0.09);
+		--surface-muted-hover: rgba(255, 255, 255, 0.16);
+		--surface-tint: rgba(59, 130, 246, 0.18);
+		--surface-tint-hover: rgba(59, 130, 246, 0.28);
+		--surface-thumb: rgba(51, 65, 85, 0.95);
+		--border-card: rgba(148, 163, 184, 0.24);
+		--border-subtle: rgba(255, 255, 255, 0.14);
+		--border-tint: rgba(147, 197, 253, 0.28);
 		--card-ring: #162033;
 		--card-shadow:
 			0 24px 48px -12px rgba(0, 0, 0, 0.55),
 			0 4px 16px -2px rgba(0, 0, 0, 0.35);
-		--text-primary: #f1f5f9;
-		--text-secondary: #94a3b8;
-		--blue-accent: #60a5fa;
-		--blue-accent-hover: #3b82f6;
-		--squircle-bg: rgba(30, 58, 138, 0.35);
-		--squircle-bg-hover: rgba(30, 58, 138, 0.6);
-		--cta-secondary-bg: rgba(51, 65, 85, 0.55);
-		--cta-secondary-hover: rgba(51, 65, 85, 0.85);
-		--cta-secondary-text: #e2e8f0;
-		--track-bg: rgba(15, 23, 42, 0.65);
-		--track-border: rgba(148, 163, 184, 0.2);
-		--thumb-bg: rgba(51, 65, 85, 0.9);
-		--control-text: #94a3b8;
-		--control-text-active: #f8fafc;
+		--text-primary: #f8fafc;
+		--text-secondary: #cbd5e1;
+		--accent: #93c5fd;
+		--accent-hover: #60a5fa;
 	}
 
 	* {
@@ -300,13 +340,26 @@ const safeJsonLd = jsonLd ? JSON.stringify(jsonLd).replace(/</g, '\\u003c') : un
 		transition: background-color 300ms ease;
 	}
 
+	.bg-overlay::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		opacity: 0.055;
+		pointer-events: none;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+		background-repeat: repeat;
+		background-size: 160px 160px;
+	}
+
 	.page-wrapper {
 		min-height: 100vh;
 		min-height: 100dvh;
 		width: 100%;
 		display: flex;
+		flex-direction: column;
 		align-items: center;
 		justify-content: center;
+		gap: 1.15rem;
 		padding: 3.5rem 1rem 1rem;
 	}
 

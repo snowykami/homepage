@@ -1,0 +1,26 @@
+{
+	"site": {
+		"titleSuffix": "ホームページ",
+		"description": "{name} のホームページ — フルスタック開発者",
+		"role": "フルスタック開発者"
+	},
+	"cta": {
+		"blog": "ブログ",
+		"status": "ステータス"
+	},
+	"controls": {
+		"themeLabel": "テーマ切替",
+		"light": "ライト",
+		"system": "システム",
+		"dark": "ダーク",
+		"langLabel": "言語切替"
+	},
+	"aria": {
+		"profile": "プロフィール",
+		"social": "ソーシャルリンク"
+	},
+	"notFound": {
+		"message": "ページが見つかりません",
+		"back": "ホームへ戻る"
+	}
+}

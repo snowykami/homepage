@@ -1,0 +1,26 @@
+{
+	"site": {
+		"titleSuffix": "个人主页",
+		"description": "{name} 的个人主页 — 全栈开发者",
+		"role": "全栈开发者"
+	},
+	"cta": {
+		"blog": "博客",
+		"status": "状态"
+	},
+	"controls": {
+		"themeLabel": "主题选择",
+		"light": "浅色",
+		"system": "系统",
+		"dark": "深色",
+		"langLabel": "语言选择"
+	},
+	"aria": {
+		"profile": "个人简介",
+		"social": "社交链接"
+	},
+	"notFound": {
+		"message": "页面不见了",
+		"back": "返回主页"
+	}
+}
