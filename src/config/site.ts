@@ -41,11 +41,11 @@ export const siteConfig: SiteConfig = {
 		en: 'Snowykami - Personal Website',
 	},
 	description: {
-		zh: 'Snowykami 的个人主页 — Full-stack developer',
+		zh: 'Snowykami 的个人主页 — 全栈开发者',
 		en: 'Snowykami personal homepage — Full-stack developer',
 	},
 	role: {
-		zh: 'Full-stack developer',
+		zh: '全栈开发者',
 		en: 'Full-stack developer',
 	},
 	ctaLinks: [
